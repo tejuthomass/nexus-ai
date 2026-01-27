@@ -1,0 +1,186 @@
+<!-- Admin Chat Modal Overlay -->
+<div id="admin-chat-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="if(event.target === this) document.getElementById('admin-chat-modal').classList.add('hidden')">
+    <div class="bg-[#1a1a1a] rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col border border-white/10 overflow-hidden" onclick="event.stopPropagation()">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-5 border-b border-white/10 bg-gradient-to-r from-[#1f1f1f] to-[#1a1a1a]">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                    <i class="fas fa-comments text-green-400 text-lg"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-white" id="admin-modal-title">Chat History</h2>
+                    <p class="text-xs text-gray-400 mt-0.5" id="admin-modal-user">User: —</p>
+                </div>
+            </div>
+            <button type="button" onclick="document.getElementById('admin-chat-modal').classList.add('hidden')" class="text-gray-400 hover:text-white transition p-2.5 hover:bg-white/5 rounded-lg">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- Modal Content -->
+        <div class="flex flex-1 gap-4 overflow-hidden">
+            <!-- Chat Messages Area -->
+            <div class="flex-1 overflow-y-auto p-5 space-y-4 bg-[#212121]">
+                <div id="admin-modal-messages">
+                    <div class="flex justify-center items-center h-full">
+                        <div class="text-center space-y-2">
+                            <i class="fas fa-circle-notch fa-spin text-2xl text-gray-500"></i>
+                            <p class="text-gray-500 text-sm">Loading conversation...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Attachments Sidebar in Modal -->
+            <div class="w-[280px] bg-[#1a1a1a] border-l border-white/10 flex flex-col">
+                <div class="p-4 border-b border-white/10">
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fas fa-paperclip"></i>
+                        Attachments
+                    </h3>
+                </div>
+                <div class="flex-1 overflow-y-auto p-3 space-y-2">
+                    <div id="admin-modal-attachments">
+                        <div class="flex items-center justify-center h-full text-center py-12">
+                            <div class="space-y-2">
+                                <i class="fas fa-inbox text-3xl text-gray-600"></i>
+                                <p class="text-xs text-gray-500">No attachments</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal Footer -->
+        <div class="p-4 border-t border-white/10 bg-[#1a1a1a] flex items-center justify-between">
+            <div class="text-xs text-gray-500">
+                <i class="fas fa-info-circle mr-1"></i>
+                Read-only view
+            </div>
+            <button type="button" onclick="document.getElementById('admin-chat-modal').classList.add('hidden')" class="px-5 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg font-medium transition flex items-center gap-2">
+                <i class="fas fa-times"></i>
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function openAdminChatModal(sessionId) {
+    const modal = document.getElementById('admin-chat-modal');
+    const messagesContainer = document.getElementById('admin-modal-messages');
+    const attachmentsContainer = document.getElementById('admin-modal-attachments');
+    
+    // Show modal immediately
+    modal.classList.remove('hidden');
+    
+    // Reset to loading state
+    messagesContainer.innerHTML = `
+        <div class="flex justify-center items-center h-full">
+            <div class="text-center space-y-2">
+                <i class="fas fa-circle-notch fa-spin text-2xl text-gray-500"></i>
+                <p class="text-gray-500 text-sm">Loading conversation...</p>
+            </div>
+        </div>
+    `;
+    
+    // Fetch the admin chat data
+    fetch(`/api/admin-chat/${sessionId}/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to load chat');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Update modal header
+            document.getElementById('admin-modal-title').textContent = data.title || 'Chat History';
+            document.getElementById('admin-modal-user').textContent = `User: ${data.user}`;
+            
+            // Populate messages with improved styling
+            if (data.messages && data.messages.length > 0) {
+                messagesContainer.innerHTML = data.messages.map(msg => {
+                    if (msg.role === 'user') {
+                        return `
+                            <div class="flex justify-end animate-[fadeIn_0.3s_ease-out_forwards]">
+                                <div class="max-w-[85%] bg-[#2F2F2F] text-gray-100 px-5 py-3.5 rounded-2xl rounded-tr-md shadow-sm border border-white/5">
+                                    <div class="text-[15px] leading-relaxed whitespace-pre-wrap">${escapeHtml(msg.content)}</div>
+                                    <div class="text-xs text-gray-500 mt-2">${formatDate(msg.created_at)}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    const html = msg.html_content || escapeHtml(msg.content || '');
+                    return `
+                        <div class="flex gap-4 animate-[fadeIn_0.3s_ease-out_forwards]">
+                            <div class="w-8 h-8 rounded-full bg-green-600/90 flex-shrink-0 flex items-center justify-center text-white text-xs mt-1">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-semibold text-sm text-green-400 mb-2">Nexus Core</div>
+                                <div class="prose prose-invert max-w-none text-gray-200 text-[15px] leading-relaxed">
+                                    ${html}
+                                </div>
+                                <div class="text-xs text-gray-600 mt-2">${formatDate(msg.created_at)}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                messagesContainer.innerHTML = '<p class="text-gray-500 text-sm text-center py-8">No messages in this conversation.</p>';
+            }
+            
+            // Populate attachments with improved styling
+            if (data.documents && data.documents.length > 0) {
+                attachmentsContainer.innerHTML = data.documents.map(doc => `
+                    <a href="${doc.file_url}" target="_blank" class="flex items-center gap-3 p-3 rounded-lg bg-[#2F2F2F] border border-white/5 hover:border-red-500/30 hover:bg-[#3a3a3a] transition group">
+                        <i class="fas fa-file-pdf text-red-400 text-lg flex-shrink-0"></i>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm text-gray-300 truncate group-hover:text-white transition font-medium">${escapeHtml(doc.title)}</p>
+                            <p class="text-xs text-gray-600">${formatDate(doc.uploaded_at)}</p>
+                        </div>
+                        <i class="fas fa-download text-gray-600 group-hover:text-gray-300 transition opacity-0 group-hover:opacity-100"></i>
+                    </a>
+                `).join('');
+            } else {
+                attachmentsContainer.innerHTML = `
+                    <div class="flex items-center justify-center h-full text-center py-8">
+                        <div class="space-y-2">
+                            <i class="fas fa-inbox text-3xl text-gray-600"></i>
+                            <p class="text-xs text-gray-500">No attachments</p>
+                        </div>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading chat:', error);
+            messagesContainer.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-triangle text-3xl text-red-400 mb-3"></i>
+                    <p class="text-red-400 text-sm font-medium">Failed to load chat details</p>
+                    <p class="text-gray-500 text-xs mt-1">${error.message}</p>
+                </div>
+            `;
+        });
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Helper function to format dates
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit'
+    });
+}
+</script>

@@ -19,7 +19,7 @@
         body { font-family: 'Inter', sans-serif; background-color: #212121; }
         
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #424242; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #616161; }
@@ -27,11 +27,137 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .htmx-indicator { display: none; }
         .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { display: flex; }
+
+        /* Mobile sidebar toggle */
+        @media (max-width: 768px) {
+            #sidebar.mobile-hidden { transform: translateX(-100%); }
+            #sidebar { transition: transform 0.3s ease-in-out; position: fixed; height: 100vh; z-index: 30; }
+        }
+
+        .error-message { background-color: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
+        
+        /* Loading spinner positioning fix */
+        #loading-spinner {
+            position: relative;
+            z-index: 10;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Improved prose styling for AI responses */
+        .prose {
+            color: #e5e7eb;
+            max-width: none;
+        }
+        
+        .prose p {
+            margin-top: 0.75rem;
+            margin-bottom: 0.75rem;
+            line-height: 1.75;
+        }
+        
+        .prose strong {
+            color: #fff;
+            font-weight: 600;
+        }
+        
+        .prose em {
+            color: #e5e7eb;
+        }
+        
+        .prose code {
+            background-color: #1a1a1a;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-size: 0.875em;
+            color: #fbbf24;
+            border: 1px solid #374151;
+        }
+        
+        .prose pre {
+            background-color: #0d1117 !important;
+            border: 1px solid #30363d;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        .prose pre code {
+            background-color: transparent;
+            border: none;
+            padding: 0;
+            color: #e5e7eb;
+            font-size: 0.875rem;
+        }
+        
+        .prose ul, .prose ol {
+            margin: 0.75rem 0;
+            padding-left: 1.5rem;
+        }
+        
+        .prose li {
+            margin: 0.375rem 0;
+        }
+        
+        .prose a {
+            color: #60a5fa;
+            text-decoration: underline;
+        }
+        
+        .prose a:hover {
+            color: #93c5fd;
+        }
+        
+        .prose blockquote {
+            border-left: 3px solid #374151;
+            padding-left: 1rem;
+            margin: 1rem 0;
+            color: #9ca3af;
+            font-style: italic;
+        }
+        
+        .prose table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1rem 0;
+        }
+        
+        .prose th, .prose td {
+            border: 1px solid #374151;
+            padding: 0.5rem;
+            text-align: left;
+        }
+        
+        .prose th {
+            background-color: #1f2937;
+            font-weight: 600;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            .fixed.bottom-0 {
+                left: 0 !important;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .fixed.bottom-0 {
+                left: 0 !important;
+            }
+        }
+        
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-gray-100 antialiased">
 
-    <div class="w-[260px] bg-[#171717] flex flex-col flex-shrink-0 transition-all duration-300 relative z-20 hidden md:flex border-r border-white/5" id="sidebar">
+    <!-- Left Sidebar - Chat History -->
+    <div class="w-[260px] bg-[#171717] flex flex-col flex-shrink-0 transition-all duration-300 relative z-20 md:flex mobile-hidden border-r border-white/5" id="sidebar">
         
         <div class="p-3 mb-2">
             <a href="{% url 'new_chat' %}" 
@@ -54,30 +180,9 @@
                 </a>
                 {% endfor %}
             </div>
-
-            {% if documents %}
-            <div class="mt-6 border-t border-white/10 pt-4">
-                <div class="text-xs font-medium text-gray-500 px-3 py-2 mb-1">Attachments</div>
-                <div class="space-y-1">
-                    {% for doc in documents %}
-                    <a href="{{ doc.file.url }}" target="_blank" class="flex items-center gap-2 px-3 py-2 text-xs text-gray-400 hover:text-white hover:bg-[#212121] rounded-lg transition">
-                        <i class="fas fa-file-pdf text-red-400"></i>
-                        <span class="truncate font-light">{{ doc.title }}</span>
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
         </div>
 
         <div class="p-2 border-t border-white/10 bg-[#171717]">
-            {% if request.user.is_superuser %}
-            <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-red-900/10 text-red-400 hover:text-red-300 transition mb-1 text-sm">
-                <i class="fas fa-shield-halved"></i>
-                <span class="font-medium">Admin Dashboard</span>
-            </a>
-            {% endif %}
-
             <div class="flex items-center justify-between px-3 py-3 hover:bg-[#212121] rounded-lg cursor-pointer group transition">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-sm bg-purple-600 text-white flex items-center justify-center font-semibold text-xs">
@@ -95,22 +200,29 @@
         </div>
     </div>
 
+    <!-- Main Chat Area -->
     <div class="flex-1 flex flex-col h-full relative bg-[#212121]">
         
         <div class="h-14 flex items-center justify-between px-4 z-10 sticky top-0 bg-[#212121]/95 backdrop-blur">
             <div class="flex items-center gap-2 overflow-hidden">
-                <button class="md:hidden text-gray-400 hover:text-white mr-2">
+                <button class="md:hidden text-gray-400 hover:text-white mr-2" onclick="toggleSidebar()">
                     <i class="fas fa-bars"></i>
                 </button>
                 {% include 'chat/partials/chat_title.html' with session=current_session %}
             </div>
-            <div class="flex items-center gap-2 text-sm text-gray-400">
+            <div class="flex items-center gap-4 text-sm text-gray-400">
+                {% if request.user.is_superuser %}
+                <a href="{% url 'dashboard' %}" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-900/20 text-red-400 hover:bg-red-900/40 transition font-medium text-xs">
+                    <i class="fas fa-shield-halved"></i>
+                    <span>Nexus Core</span>
+                </a>
+                {% endif %}
                 <span class="opacity-50">Model:</span>
                 <span class="text-gray-200 font-medium">Gemini 2.5 Flash</span>
             </div>
         </div>
 
-        <div id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 pb-60 scroll-smooth custom-scrollbar">
+        <div id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 scroll-smooth custom-scrollbar" style="padding-bottom: 200px;">
             
             {% if not messages %}
                 <div id="empty-state" class="flex flex-col items-center justify-center h-full text-center opacity-0 animate-[fadeIn_0.5s_ease-out_forwards]">
@@ -122,21 +234,21 @@
                 </div>
             {% else %}
                 {% for msg in messages %}
-                    <div class="max-w-3xl mx-auto w-full group">
+                    <div class="max-w-3xl mx-auto w-full group animate-[fadeIn_0.3s_ease-out_forwards]">
                         {% if msg.role == 'user' %}
                             <div class="flex justify-end mb-6">
-                                <div class="max-w-[85%] bg-[#2F2F2F] text-gray-100 px-5 py-3 rounded-3xl rounded-tr-sm">
-                                    <div class="whitespace-pre-wrap">{{ msg.content }}</div>
+                                <div class="max-w-[85%] bg-[#2F2F2F] text-gray-100 px-5 py-3.5 rounded-2xl rounded-tr-md shadow-sm border border-white/5">
+                                    <div class="whitespace-pre-wrap text-[15px] leading-relaxed">{{ msg.content }}</div>
                                 </div>
                             </div>
                         {% else %}
-                            <div class="flex gap-4 mb-8">
+                            <div class="flex gap-4 mb-8 animate-[fadeIn_0.3s_ease-out_forwards]">
                                 <div class="w-8 h-8 rounded-full bg-green-600/90 flex-shrink-0 flex items-center justify-center text-white text-xs mt-1">
                                     <i class="fas fa-bolt"></i>
                                 </div>
                                 <div class="flex-1 min-w-0 pt-1">
-                                    <div class="font-medium text-sm text-white mb-1">Nexus</div>
-                                    <div class="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#0d1117] prose-pre:border prose-pre:border-gray-700/50 max-w-none text-gray-300">
+                                    <div class="font-semibold text-sm text-green-400 mb-2">Nexus Core</div>
+                                    <div class="prose prose-invert max-w-none text-gray-200 leading-relaxed markdown-body">
                                         {{ msg.get_html_content|safe }}
                                     </div>
                                 </div>
@@ -156,10 +268,14 @@
             </div>
         </div>
 
-        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#212121] via-[#212121] to-transparent pt-10 pb-6 px-4">
-            <div class="max-w-3xl mx-auto">
+        <div class="fixed bottom-0 right-0 lg:right-[280px] bg-gradient-to-t from-[#212121] via-[#212121]/95 to-transparent pt-10 pb-6 px-4 z-20" style="left: 260px;">
+            <div class="max-w-3xl mx-auto w-full">
                 
                 <div id="upload-feedback" class="mb-2"></div>
+                <div id="upload-indicator" class="htmx-indicator flex items-center gap-2 text-sm text-gray-400 mb-3 bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-2">
+                    <i class="fas fa-circle-notch fa-spin text-blue-400"></i>
+                    <span class="text-blue-300">Uploading PDF...</span>
+                </div>
 
                 <form hx-post="{% url 'chat_session' current_session.id %}"
                       hx-indicator="#loading-spinner" 
@@ -174,37 +290,64 @@
                         c.scrollTop = c.scrollHeight; 
                         setTimeout(() => { c.scrollTop = c.scrollHeight; hljs.highlightAll(); }, 50);
                       "
-                      class="relative bg-[#2F2F2F] rounded-2xl shadow-lg border border-white/5 focus-within:border-white/20 transition-colors">
+                      class="relative bg-[#2F2F2F] rounded-2xl shadow-xl border border-white/10 focus-within:border-green-500/30 focus-within:shadow-green-500/10 transition-all duration-200">
                     
                     {% csrf_token %}
                     
-                    <div class="flex items-end p-2 gap-2">
-                        <label class="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl cursor-pointer transition" title="Attach PDF">
-                            <i class="fas fa-paperclip"></i>
+                    <div class="flex items-end p-2.5 gap-2">
+                        <label class="p-2.5 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl cursor-pointer transition-all duration-200" title="Attach PDF">
+                               <i class="fas fa-paperclip text-lg"></i>
                             <input type="file" name="pdf_file" accept=".pdf" class="hidden" 
                                    hx-post="{% url 'chat_session' current_session.id %}" 
                                    hx-encoding="multipart/form-data"
-                                   hx-target="#upload-feedback">
+                                   hx-target="#upload-feedback"
+                                   hx-indicator="#upload-indicator"
+                                   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
                         </label>
 
                         <textarea name="message" rows="1" 
-                                  class="flex-1 max-h-[200px] bg-transparent border-none focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-3 text-base" 
+                                  class="flex-1 max-h-[200px] bg-transparent border-none focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-3.5 px-2 text-[15px] leading-relaxed" 
                                   placeholder="Message Nexus..." required
                                   oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"
                                   onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); this.form.requestSubmit(); }"></textarea>
 
-                        <button type="submit" class="p-2 bg-white text-black hover:bg-gray-200 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed mb-1">
-                            <i class="fas fa-arrow-up text-sm"></i>
+                        <button type="submit" class="p-2.5 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-500/20 mb-0.5">
+                            <i class="fas fa-arrow-up text-base"></i>
                         </button>
                     </div>
                 </form>
                 
-                <div class="text-center mt-2">
-                    <p class="text-[11px] text-gray-600">Nexus can make mistakes. Check important info.</p>
+                <div class="text-center mt-3">
+                    <p class="text-xs text-gray-600">Nexus can make mistakes. Check important info.</p>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Right Sidebar - Attachments -->
+    {% include 'chat/partials/attachments_sidebar.html' with documents=documents %}
+
+    <!-- Admin Chat Modal -->
+    {% include 'chat/partials/admin_chat_modal.html' %}
+
 </body>
+
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('mobile-hidden');
+    }
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(event) {
+        const sidebar = document.getElementById('sidebar');
+        const target = event.target;
+
+        if (window.innerWidth < 768 && !sidebar.classList.contains('mobile-hidden')) {
+            if (!sidebar.contains(target) && !target.closest('button[onclick="toggleSidebar()"]')) {
+                sidebar.classList.add('mobile-hidden');
+            }
+        }
+    });
+</script>
 </html>

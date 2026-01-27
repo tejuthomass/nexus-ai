@@ -3,15 +3,26 @@ __pycache__/
 *.py[cod]
 *$py.class
 venv/
+.venv/
 env/
 .env
+.env.*
 
 # Django
 db.sqlite3
 db.sqlite3-journal
+*.sqlite3
 local_settings.py
 staticfiles/
 media/
+
+# Python tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+*.log
 
 # Cloudinary / Static
 # We don't want to track user uploads locally since they are in the cloud

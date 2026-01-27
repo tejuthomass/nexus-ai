@@ -1,7 +1,7 @@
 <div class="max-w-3xl mx-auto w-full group animate-[fadeIn_0.3s_ease-out_forwards]">
     <div class="flex justify-end mb-6">
-        <div class="max-w-[85%] bg-[#2F2F2F] text-gray-100 px-5 py-3 rounded-3xl rounded-tr-sm">
-            <div class="whitespace-pre-wrap">{{ message.content }}</div>
+        <div class="max-w-[85%] bg-[#2F2F2F] text-gray-100 px-5 py-3.5 rounded-2xl rounded-tr-md shadow-sm border border-white/5">
+            <div class="whitespace-pre-wrap text-[15px] leading-relaxed">{{ message.content }}</div>
         </div>
     </div>
 </div>
@@ -12,9 +12,9 @@
             <i class="fas fa-bolt"></i>
         </div>
         <div class="flex-1 min-w-0 pt-1">
-            <div class="font-medium text-sm text-white mb-1">Nexus</div>
-            <div class="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#0d1117] prose-pre:border prose-pre:border-gray-700/50 max-w-none text-gray-300">
-                {{ response|safe }}
+            <div class="font-semibold text-sm text-green-400 mb-2">Nexus Core</div>
+            <div class="prose prose-invert max-w-none text-gray-200 leading-relaxed">
+                {{ response_html|safe }}
             </div>
         </div>
     </div>

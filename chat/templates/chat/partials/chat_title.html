@@ -11,6 +11,13 @@
         <i class="fas fa-pencil-alt text-xs"></i>
     </button>
 
+    <button class="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition"
+            hx-post="{% url 'delete_user_chat_session' session.id %}"
+            hx-confirm="Delete this chat session? All messages and attachments will be removed."
+            title="Delete chat">
+        <i class="fas fa-trash-alt text-xs"></i>
+    </button>
+
     <form hx-post="{% url 'rename_chat' session.id %}" 
           hx-target="#chat-title-container" 
           hx-swap="outerHTML"

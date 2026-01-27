@@ -1,0 +1,93 @@
+{% for data in user_data %}
+<div class="bg-[#212121] border border-white/5 rounded-2xl overflow-hidden shadow-lg transition-all duration-200 hover:border-white/10 hover:shadow-xl" id="user-card-{{ data.user.id }}">
+    
+    <div class="p-6 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-[#262626] to-[#2a2a2a]">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-base shadow-lg shadow-blue-500/20">
+                {{ data.user.username|first|upper }}
+            </div>
+            <div>
+                <h3 class="font-semibold text-lg text-white">{{ data.user.username }}</h3>
+                <div class="flex gap-4 text-xs text-gray-400 mt-1">
+                    <span class="flex items-center gap-1.5">
+                        <i class="fas fa-envelope"></i> 
+                        {{ data.user.email }}
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <i class="far fa-calendar"></i> 
+                        {{ data.user.date_joined|date:"M d, Y" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <button hx-post="{% url 'delete_user' data.user.id %}" 
+                hx-confirm="⚠️ Delete user '{{ data.user.username }}'? This will permanently delete ALL their data, conversations, and attachments. This action cannot be undone." 
+                hx-target="#user-card-{{ data.user.id }}" 
+                hx-swap="outerHTML"
+                class="px-4 py-2 bg-red-900/20 text-red-400 rounded-lg text-sm font-medium hover:bg-red-900/40 border border-red-900/30 hover:border-red-900/50 transition-all duration-200 flex items-center gap-2">
+            <i class="fas fa-trash-alt"></i> 
+            Delete User
+        </button>
+    </div>
+
+    <div class="p-6 bg-[#212121]">
+        <div class="flex items-center justify-between mb-4">
+            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                <i class="fas fa-comments text-blue-400"></i>
+                Active Sessions
+                <span class="ml-1 px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-[10px] font-bold">
+                    {{ data.session_count }}
+                </span>
+            </h4>
+        </div>
+        
+        {% if data.sessions %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {% for session in data.sessions %}
+                <div class="group flex items-center justify-between p-4 rounded-xl bg-[#2F2F2F] border border-white/5 hover:border-blue-500/30 hover:bg-[#353535] transition-all duration-200" id="session-{{ session.id }}">
+                    <div class="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
+                        <i class="far fa-comments text-gray-500 group-hover:text-blue-400 transition-colors duration-200 flex-shrink-0"></i>
+                        <span class="text-sm text-gray-300 truncate">{{ session.title }}</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <button onclick="openAdminChatModal({{ session.id }})" 
+                                class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 transition-all duration-200" 
+                                title="View Full Conversation">
+                            <i class="fas fa-eye text-sm"></i>
+                        </button>
+                        <button hx-post="{% url 'delete_chat_session' session.id %}"
+                                hx-confirm="Delete conversation '{{ session.title }}'? This cannot be undone."
+                                hx-target="#session-{{ session.id }}"
+                                hx-swap="outerHTML"
+                                class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all duration-200" 
+                                title="Delete Conversation">
+                            <i class="fas fa-trash text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-12 rounded-xl bg-[#1a1a1a] border border-white/5">
+                <i class="fas fa-inbox text-3xl text-gray-600 mb-3"></i>
+                <p class="text-sm text-gray-500">No conversations yet</p>
+                <p class="text-xs text-gray-600 mt-1">User hasn't started chatting</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% empty %}
+<div class="text-center py-20 bg-[#212121] rounded-2xl border border-white/5 shadow-lg">
+    <div class="w-16 h-16 bg-gray-800/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <i class="fas fa-users text-3xl text-gray-600"></i>
+    </div>
+    <h3 class="text-xl font-semibold text-gray-300 mb-2">No Users Found</h3>
+    <p class="text-sm text-gray-500 mb-4">Create a user in Django admin to get started</p>
+    <a href="/admin/auth/user/add/" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-all duration-200 shadow-lg shadow-green-600/20">
+        <i class="fas fa-user-plus"></i>
+        Add First User
+    </a>
+</div>
+{% endfor %}

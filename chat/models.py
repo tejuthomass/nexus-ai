@@ -9,6 +9,13 @@ class ChatSession(models.Model):
     # We will sort by this to show the latest chat at the top
     updated_at = models.DateTimeField(auto_now=True) 
     
+    class Meta:
+        indexes = [
+            models.Index(fields=['-updated_at']),
+            models.Index(fields=['user', '-updated_at']),
+        ]
+        ordering = ['-updated_at']
+    
     def __str__(self):
         return f"{self.title}"
 
@@ -19,6 +26,12 @@ class Document(models.Model):
     file = models.FileField(upload_to='pdfs/') 
     title = models.CharField(max_length=255)
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['session', '-uploaded_at']),
+        ]
+        ordering = ['-uploaded_at']
 
     def __str__(self):
         return self.title
@@ -31,5 +44,29 @@ class Message(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     
+    class Meta:
+        indexes = [
+            models.Index(fields=['session', 'created_at']),
+        ]
+        ordering = ['created_at']
+    
     def get_html_content(self):
-        return markdown.markdown(self.content)
+        """Render markdown with robust extensions so bullets, bold, and code render cleanly."""
+        return markdown.markdown(
+            self.content or "",
+            extensions=[
+                'extra',        # tables, code fences, etc.
+                'fenced_code',
+                'codehilite',
+                'tables',
+                'nl2br',
+                'sane_lists',
+            ],
+            extension_configs={
+                'codehilite': {
+                    'css_class': 'highlight',
+                    'linenums': False,
+                }
+            },
+            output_format='html5'
+        )

@@ -7,7 +7,7 @@ A Django-based RAG (Retrieval-Augmented Generation) Chatbot that combines Google
 * **Hybrid Intelligence:** Automatically switches between General AI chat and RAG document analysis
 * **Smart Memory:** Vector search using Pinecone to remember and reference uploaded PDFs
 * **Cloud Storage:** Seamless PDF upload and storage via Cloudinary
-* **God Mode Dashboard:** Comprehensive admin interface to manage users and chat history
+* **Nexus Core Dashboard:** Comprehensive admin interface to manage users and chat history
 * **Modern UI:** Dark-themed interface built with Tailwind CSS and HTMX for smooth interactions
 * **Invite-Only System:** Controlled user access with admin-managed registration
 
@@ -135,7 +135,7 @@ Access the application at: **http://127.0.0.1:8000**
 3. **Upload PDFs:** Click the upload button to add documents for analysis
 4. **Smart Switching:** The system automatically detects when to use RAG vs. general chat
 
-### For Administrators (God Mode)
+### For Administrators (Nexus Core)
 
 1. **Access Dashboard:** Click "Admin Dashboard" in the sidebar
 2. **User Management:**
