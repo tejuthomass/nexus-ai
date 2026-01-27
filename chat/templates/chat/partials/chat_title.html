@@ -1,0 +1,26 @@
+<div class="flex items-center gap-2 group" id="chat-title-container">
+    <h2 class="font-semibold text-gray-200 truncate max-w-md cursor-text" 
+        id="title-text-{{ session.id }}"
+        onclick="document.getElementById('edit-btn-{{ session.id }}').click()">
+        {{ session.title }}
+    </h2>
+    
+    <button id="edit-btn-{{ session.id }}"
+            onclick="document.getElementById('title-form-{{ session.id }}').classList.remove('hidden'); document.getElementById('title-text-{{ session.id }}').classList.add('hidden'); this.classList.add('hidden');" 
+            class="text-gray-500 hover:text-white opacity-0 group-hover:opacity-100 transition">
+        <i class="fas fa-pencil-alt text-xs"></i>
+    </button>
+
+    <form hx-post="{% url 'rename_chat' session.id %}" 
+          hx-target="#chat-title-container" 
+          hx-swap="outerHTML"
+          id="title-form-{{ session.id }}" 
+          class="hidden flex items-center gap-2">
+        
+        {% csrf_token %}
+        <input type="text" name="new_title" value="{{ session.title }}" 
+               class="bg-[#40414F] text-white border border-gray-600 rounded px-2 py-1 text-sm focus:outline-blue-500" 
+               autofocus
+               onblur="htmx.trigger(this.form, 'submit')">
+    </form>
+</div>

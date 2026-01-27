@@ -1,0 +1,21 @@
+<div class="max-w-3xl mx-auto w-full group animate-[fadeIn_0.3s_ease-out_forwards]">
+    <div class="flex justify-end mb-6">
+        <div class="max-w-[85%] bg-[#2F2F2F] text-gray-100 px-5 py-3 rounded-3xl rounded-tr-sm">
+            <div class="whitespace-pre-wrap">{{ message.content }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-3xl mx-auto w-full group animate-[fadeIn_0.3s_ease-out_forwards]">
+    <div class="flex gap-4 mb-8">
+        <div class="w-8 h-8 rounded-full bg-green-600/90 flex-shrink-0 flex items-center justify-center text-white text-xs mt-1">
+            <i class="fas fa-bolt"></i>
+        </div>
+        <div class="flex-1 min-w-0 pt-1">
+            <div class="font-medium text-sm text-white mb-1">Nexus</div>
+            <div class="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#0d1117] prose-pre:border prose-pre:border-gray-700/50 max-w-none text-gray-300">
+                {{ response|safe }}
+            </div>
+        </div>
+    </div>
+</div>
