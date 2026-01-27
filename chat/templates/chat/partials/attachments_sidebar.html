@@ -7,28 +7,90 @@
         </h3>
     </div>
     
-    <div class="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
-        {% if documents %}
-            {% for doc in documents %}
-            <a href="{{ doc.file.url }}" target="_blank" class="flex items-center gap-3 p-3 rounded-lg bg-[#2F2F2F] border border-white/5 hover:border-red-500/30 hover:bg-[#3F3F3F] transition-all duration-200 group">
-                <i class="fas fa-file-pdf text-red-400 text-lg flex-shrink-0"></i>
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm text-gray-300 truncate group-hover:text-white transition font-medium">{{ doc.title }}</p>
-                    <p class="text-xs text-gray-500 mt-0.5">{{ doc.uploaded_at|date:"M d, H:i" }}</p>
-                </div>
-                <i class="fas fa-download text-gray-600 group-hover:text-gray-300 transition opacity-0 group-hover:opacity-100"></i>
-            </a>
-            {% endfor %}
-        {% else %}
-            <div class="flex items-center justify-center h-full text-center py-12">
-                <div class="space-y-3">
-                    <i class="fas fa-inbox text-4xl text-gray-600"></i>
-                    <div>
-                        <p class="text-sm text-gray-500 font-medium">No attachments yet</p>
-                        <p class="text-xs text-gray-600 mt-1">Upload PDFs to get started</p>
-                    </div>
+    <!-- File Upload Section -->
+    <div class="p-3 border-b border-white/5">
+        <form id="pdf-upload-form" 
+              hx-post="{% url 'chat_session' session.id %}" 
+              hx-encoding="multipart/form-data"
+              hx-target="#attachments-list"
+              hx-indicator="#sidebar-upload-indicator"
+              hx-on::before-request="disableChatInput()"
+              hx-on::after-request="enableChatInput(); this.reset(); updateFileLabel('');"
+              class="space-y-2">
+            {% csrf_token %}
+            
+            <!-- Upload Indicator -->
+            <div id="sidebar-upload-indicator" class="htmx-indicator mb-2 p-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <div class="flex items-center gap-2 text-xs">
+                    <i class="fas fa-circle-notch fa-spin text-blue-400"></i>
+                    <span class="text-blue-300">Processing PDF...</span>
                 </div>
             </div>
-        {% endif %}
+            
+            <!-- Upload Button -->
+            <label for="sidebar-pdf-upload" class="flex items-center justify-center gap-2 px-3 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg cursor-pointer transition-all duration-200 text-sm font-medium">
+                <i class="fas fa-upload"></i>
+                <span>Upload PDF</span>
+            </label>
+            <input type="file" 
+                   id="sidebar-pdf-upload" 
+                   name="pdf_file" 
+                   accept=".pdf" 
+                   class="hidden"
+                   onchange="updateFileLabel(this.files[0]?.name || ''); this.form.dispatchEvent(new Event('submit', {bubbles: true}));">
+            
+            <!-- File Info -->
+            <div id="file-label" class="text-xs text-gray-500 text-center min-h-[16px]"></div>
+            
+            <!-- Size Limit Info -->
+            <div class="text-xs text-gray-600 text-center">
+                <i class="fas fa-info-circle"></i> Max size: 10MB
+            </div>
+        </form>
+        
+        <!-- Error/Success Messages -->
+        <div id="upload-message" class="mt-2"></div>
+    </div>
+    
+    <!-- Attachments List -->
+    <div id="attachments-list" class="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+        {% include 'chat/partials/attachments_list.html' with documents=documents %}
     </div>
 </div>
+
+<script>
+function updateFileLabel(filename) {
+    const label = document.getElementById('file-label');
+    if (filename) {
+        label.textContent = filename.length > 25 ? filename.substring(0, 25) + '...' : filename;
+        label.classList.add('text-green-400');
+    } else {
+        label.textContent = '';
+        label.classList.remove('text-green-400');
+    }
+}
+
+function disableChatInput() {
+    const textarea = document.querySelector('textarea[name="message"]');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    if (textarea) {
+        textarea.disabled = true;
+        textarea.placeholder = "Processing PDF, please wait...";
+    }
+    if (submitBtn) {
+        submitBtn.disabled = true;
+    }
+}
+
+function enableChatInput() {
+    const textarea = document.querySelector('textarea[name="message"]');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    if (textarea) {
+        textarea.disabled = false;
+        textarea.placeholder = "Message Nexus...";
+    }
+    if (submitBtn) {
+        submitBtn.disabled = false;
+    }
+}
+</script>

@@ -40,7 +40,7 @@ def cleanup_document_file(sender, instance, **kwargs):
         try:
             # We stored the public_id in the file name field
             public_id = instance.file.name 
-            cloudinary.uploader.destroy(public_id, resource_type="auto")
+            cloudinary.uploader.destroy(public_id, resource_type="raw")
             logger.info(f"✅ Deleted Cloudinary file: {public_id}")
         except Exception as e:
             logger.error(f"Error deleting from Cloudinary: {e}")

@@ -1,10 +1,11 @@
 <div class="flex items-center gap-2 group" id="chat-title-container">
-    <h2 class="font-semibold text-gray-200 truncate max-w-md cursor-text" 
+    <h2 class="font-semibold text-gray-200 truncate max-w-md {% if session.messages.count > 0 %}cursor-text{% endif %}" 
         id="title-text-{{ session.id }}"
-        onclick="document.getElementById('edit-btn-{{ session.id }}').click()">
+        {% if session.messages.count > 0 %}onclick="document.getElementById('edit-btn-{{ session.id }}').click()"{% endif %}>
         {{ session.title }}
     </h2>
     
+    {% if session.messages.count > 0 %}
     <button id="edit-btn-{{ session.id }}"
             onclick="document.getElementById('title-form-{{ session.id }}').classList.remove('hidden'); document.getElementById('title-text-{{ session.id }}').classList.add('hidden'); this.classList.add('hidden');" 
             class="text-gray-500 hover:text-white opacity-0 group-hover:opacity-100 transition">
@@ -13,10 +14,12 @@
 
     <button class="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition"
             hx-post="{% url 'delete_user_chat_session' session.id %}"
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
             hx-confirm="Delete this chat session? All messages and attachments will be removed."
             title="Delete chat">
         <i class="fas fa-trash-alt text-xs"></i>
     </button>
+    {% endif %}
 
     <form hx-post="{% url 'rename_chat' session.id %}" 
           hx-target="#chat-title-container" 

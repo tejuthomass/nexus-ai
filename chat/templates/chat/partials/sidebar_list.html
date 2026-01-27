@@ -1,0 +1,8 @@
+{% for session in chat_sessions %}
+<a href="{% url 'chat_session' session.id %}" 
+   class="group flex items-center gap-3 px-3 py-3 text-sm rounded-lg transition-colors relative overflow-hidden
+          {% if session.id == current_session.id %} bg-[#212121] text-white {% else %} text-gray-400 hover:bg-[#212121] hover:text-white {% endif %}">
+    <i class="far fa-message text-sm"></i>
+    <div class="flex-1 truncate relative z-10 text-sm font-light">{{ session.title }}</div>
+</a>
+{% endfor %}

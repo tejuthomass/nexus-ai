@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Comprehensive test script for Nexus AI application
+Comprehensive test script for Nexus application
 Tests all the new features and fixes
 """
 
@@ -239,7 +239,7 @@ class NexusAITests:
     def run_all_tests(self):
         """Run all tests"""
         print("=" * 60)
-        print("🚀 NEXUS AI - COMPREHENSIVE TEST SUITE")
+        print("🚀 NEXUS - COMPREHENSIVE TEST SUITE")
         print("=" * 60)
         
         self.setup()

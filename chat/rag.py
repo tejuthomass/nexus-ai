@@ -46,40 +46,63 @@ def ingest_document(file_identifier, text_content):
     try:
         google_client, index = get_clients()
         
-        chunk_size = 1000
+        # Split text into larger chunks to reduce API calls
+        # Use 2000 chars per chunk for better content context and fewer embeddings
+        chunk_size = 2000
         chunks = [text_content[i:i+chunk_size] for i in range(0, len(text_content), chunk_size)]
         
         if not chunks:
             raise ValueError("No text chunks to process")
         
+        # Use batch embedding API for efficiency (up to 100 texts per request)
         vectors = []
-        for i, chunk in enumerate(chunks):
+        batch_size_for_embedding = 10  # Embed 10 chunks at a time
+        
+        for batch_start in range(0, len(chunks), batch_size_for_embedding):
+            batch_end = min(batch_start + batch_size_for_embedding, len(chunks))
+            batch_chunks = chunks[batch_start:batch_end]
+            
             try:
+                # Batch embed multiple chunks in one API call
                 response = google_client.models.embed_content(
                     model="text-embedding-004",
-                    contents=chunk
+                    contents=batch_chunks
                 )
-                embedding = response.embeddings[0].values
                 
-                vector_id = f"{file_identifier}_{i}"
+                # Process embeddings for this batch
+                for idx, (chunk_idx, chunk) in enumerate(enumerate(batch_chunks, batch_start)):
+                    embedding = response.embeddings[idx].values
+                    vector_id = f"{file_identifier}_{chunk_idx}"
+                    
+                    vectors.append({
+                        "id": vector_id,
+                        "values": embedding,
+                        "metadata": {
+                            "text": chunk,
+                            "source": file_identifier,
+                            "session_id": session_id
+                        }
+                    })
                 
-                vectors.append({
-                    "id": vector_id,
-                    "values": embedding,
-                    "metadata": {
-                        "text": chunk, 
-                        "source": file_identifier,
-                        "session_id": session_id  # <--- CRITICAL: Save Session ID
-                    }
-                })
+                logger.info(f"Embedded batch {batch_start//batch_size_for_embedding + 1}: chunks {batch_start}-{batch_end-1}")
             except Exception as e:
-                logger.warning(f"Failed to embed chunk {i}: {e}")
-                continue
+                logger.error(f"Failed to embed batch starting at chunk {batch_start}: {e}")
+                raise
 
         if not vectors:
             raise ValueError("No vectors were successfully created")
-            
-        index.upsert(vectors=vectors)
+        
+        # Batch upsert to respect Pinecone's size limits (~4MB per request)
+        pinecone_batch_size = 50  # Upsert in batches of 50 vectors
+        for i in range(0, len(vectors), pinecone_batch_size):
+            batch = vectors[i:i+pinecone_batch_size]
+            try:
+                index.upsert(vectors=batch)
+                logger.info(f"Upserted batch {i//pinecone_batch_size + 1} with {len(batch)} vectors for {file_identifier}")
+            except Exception as e:
+                logger.error(f"Failed to upsert batch {i//pinecone_batch_size + 1}: {e}")
+                raise
+        
         logger.info(f"Successfully ingested {len(vectors)} vectors for {file_identifier}")
         return len(vectors)
     except Exception as e:
@@ -128,3 +151,14 @@ def delete_session_vectors(session_id):
         logger.info(f"🧹 Cleaned vectors for session {session_id}")
     except Exception as e:
         logger.error(f"Error cleaning vectors for session {session_id}: {e}")
+
+# 6. Delete Vectors for Specific Document (For Failed Uploads)
+def delete_document_vectors(file_identifier):
+    """Delete vectors for a specific document by file_identifier"""
+    try:
+        google_client, index = get_clients()
+        # Delete all vectors where source matches the file_identifier
+        index.delete(filter={"source": {"$eq": file_identifier}})
+        logger.info(f"🧹 Cleaned vectors for document {file_identifier}")
+    except Exception as e:
+        logger.error(f"Error cleaning vectors for document {file_identifier}: {e}")

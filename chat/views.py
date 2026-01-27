@@ -1,6 +1,7 @@
 import os
 import io
 import logging
+import time
 import cloudinary           # Cloudinary Import
 import cloudinary.uploader  # Cloudinary Uploader
 from django.core.files.base import ContentFile
@@ -10,7 +11,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import ChatSession, Message, Document
 from django.contrib.auth.decorators import login_required
 from dotenv import load_dotenv
-from .rag import ingest_document, retrieve_context, extract_text_from_pdf
+from .rag import ingest_document, retrieve_context, extract_text_from_pdf, delete_document_vectors
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.models import User
 from django.http import HttpResponse
@@ -21,6 +22,63 @@ logger = logging.getLogger(__name__)
 # File upload validation settings
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 ALLOWED_EXTENSIONS = ['.pdf']
+
+# API retry settings
+MAX_RETRIES = 3
+RETRY_DELAY = 1  # Initial delay in seconds
+
+def generate_ai_response_with_retry(client, model, prompt, max_retries=MAX_RETRIES):
+    """
+    Generate AI response with automatic retry logic for transient errors.
+    
+    Args:
+        client: Gemini API client
+        model: Model name (e.g., 'gemini-2.5-flash')
+        prompt: The prompt to send
+        max_retries: Maximum number of retry attempts
+    
+    Returns:
+        Response text from the AI
+        
+    Raises:
+        Exception: If all retries fail or on non-retryable errors
+    """
+    last_error = None
+    
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(model=model, contents=prompt)
+            return response.text
+            
+        except Exception as e:
+            error_str = str(e)
+            last_error = e
+            
+            # Check if error is retryable (503, 429, or other transient errors)
+            is_retryable = (
+                '503' in error_str or 
+                '429' in error_str or 
+                'overloaded' in error_str.lower() or
+                'rate limit' in error_str.lower() or
+                'temporarily unavailable' in error_str.lower()
+            )
+            
+            if is_retryable and attempt < max_retries - 1:
+                # Calculate exponential backoff delay
+                delay = RETRY_DELAY * (2 ** attempt)
+                logger.warning(
+                    f"API request failed (attempt {attempt + 1}/{max_retries}): {error_str}. "
+                    f"Retrying in {delay}s..."
+                )
+                time.sleep(delay)
+                continue
+            else:
+                # Non-retryable error or max retries reached
+                logger.error(f"API request failed permanently: {error_str}")
+                raise
+    
+    # If we get here, all retries failed
+    raise last_error
 
 @login_required
 def chat_view(request, session_id=None):
@@ -42,6 +100,20 @@ def chat_view(request, session_id=None):
     
     # Show ONLY documents uploaded to THIS session (Privacy)
     session_docs = Document.objects.filter(session=current_session).select_related('session').order_by('-uploaded_at')
+    
+    # Handle HTMX partial updates after first message
+    if request.method == "GET" and request.headers.get('HX-Request'):
+        hx_target = request.headers.get('HX-Target', '')
+        
+        if hx_target == 'title':
+            # Return just the updated title
+            return render(request, 'chat/partials/chat_title.html', {'session': current_session})
+        elif hx_target == 'sidebar':
+            # Return just the updated sidebar list
+            return render(request, 'chat/partials/sidebar_list.html', {
+                'chat_sessions': all_sessions,
+                'current_session': current_session
+            })
 
     # 3. Handle File Upload
     if request.method == "POST" and request.FILES.get('pdf_file'):
@@ -72,7 +144,7 @@ def chat_view(request, session_id=None):
             unique_public_id = f"session_{current_session.id}_{uploaded_file.name}"
             upload_result = cloudinary.uploader.upload(
                 io.BytesIO(file_content), 
-                resource_type="auto", 
+                resource_type="raw", 
                 public_id=unique_public_id
             )
 
@@ -85,13 +157,21 @@ def chat_view(request, session_id=None):
             doc.save()
 
             # 4. Send to Pinecone
-            ingest_document(f"{current_session.id}_{uploaded_file.name}", raw_text)
+            file_identifier = f"{current_session.id}_{uploaded_file.name}"
+            try:
+                ingest_document(file_identifier, raw_text)
+            except Exception as ingest_error:
+                # PRODUCTION FIX: Rollback database if Pinecone fails
+                logger.error(f"Pinecone ingestion failed, rolling back document: {ingest_error}")
+                doc.delete()
+                delete_document_vectors(file_identifier)  # Cleanup partial vectors
+                raise
             
             logger.info(f"File uploaded successfully: {uploaded_file.name} for session {current_session.id}")
             
-            # Refresh attachments section
+            # Refresh attachments list in sidebar
             session_docs = Document.objects.filter(session=current_session).select_related('session').order_by('-uploaded_at')
-            return render(request, 'chat/partials/attachments.html', {
+            return render(request, 'chat/partials/attachments_list.html', {
                 'documents': session_docs
             })
         except ValueError as e:
@@ -122,6 +202,9 @@ def chat_view(request, session_id=None):
             })
         
         try:
+            # Check if this is the first message (before creating it)
+            is_first_message = current_session.messages.count() == 0
+            
             # Save User Message
             Message.objects.create(session=current_session, role='user', content=user_message)
             
@@ -148,7 +231,7 @@ def chat_view(request, session_id=None):
                 doc_names = ", ".join([d.title for d in session_docs])
                 
                 system_instruction = f"""
-                You are Nexus, an AI assistant analyzing the following documents: {doc_names}.
+                You are Nexus, analyzing the following documents: {doc_names}.
                 
                 STRICT RULES:
                 1. Use the CONTEXT below to answer the user's question.
@@ -159,9 +242,9 @@ def chat_view(request, session_id=None):
                 {context}
                 """
             else:
-                # --- GENERAL AI MODE (No docs) ---
+                # --- GENERAL MODE (No docs) ---
                 system_instruction = """
-                You are Nexus, a helpful and intelligent AI assistant. 
+                You are Nexus, a helpful and intelligent assistant. 
                 Engage in normal conversation, answer questions, and assist the user.
                 """
 
@@ -173,21 +256,45 @@ def chat_view(request, session_id=None):
             """
 
             client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-            response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
-            ai_text = response.text
+            
+            # Use retry logic for API calls
+            ai_text = generate_ai_response_with_retry(client, 'gemini-2.5-flash', prompt)
             
             assistant_message = Message.objects.create(session=current_session, role='assistant', content=ai_text)
             
             logger.info(f"Chat message processed for session {current_session.id}")
             rendered_html = assistant_message.get_html_content()
-            return render(request, 'chat/partials/message.html', {
+            
+            # Build response with HTMX headers for first message
+            response = render(request, 'chat/partials/message.html', {
                 'message': {'content': user_message},
                 'response_html': mark_safe(rendered_html)
             })
+            
+            # If this was the first message, trigger UI updates
+            if is_first_message:
+                # Trigger updates for title, sidebar, and URL
+                response['HX-Trigger'] = 'firstMessageSent'
+                # Also push new URL to browser
+                response['HX-Push-Url'] = f'/chat/{current_session.id}/'
+            
+            return response
         except Exception as e:
+            error_str = str(e)
             logger.error(f"Chat message processing failed: {e}")
+            
+            # Provide specific error messages based on error type
+            if '503' in error_str or 'overloaded' in error_str.lower():
+                error_message = "⚠️ Nexus is currently overloaded. We tried multiple times but couldn't get through. Please try again in a moment."
+            elif '429' in error_str or 'rate limit' in error_str.lower():
+                error_message = "⚠️ Rate limit reached. Please wait a moment before sending another message."
+            elif 'api_key' in error_str.lower() or 'authentication' in error_str.lower():
+                error_message = "❌ API authentication error. Please contact the administrator."
+            else:
+                error_message = "❌ Failed to generate response. Please try again."
+            
             return render(request, 'chat/partials/system_message.html', {
-                'content': "❌ Failed to generate response. Please try again.",
+                'content': error_message,
                 'error': True
             })
 
@@ -220,6 +327,12 @@ def rename_chat(request, session_id):
     # --- TASK 4: RENAME CHAT LOGIC ---
     if request.method == "POST":
         session = get_object_or_404(ChatSession, id=session_id, user=request.user)
+        
+        # Prevent renaming empty conversations (defensive check)
+        message_count = session.messages.count()
+        if message_count == 0:
+            return HttpResponse(status=204)  # No content, just ignore the request
+        
         new_title = request.POST.get('new_title')
         if new_title:
             session.title = new_title
@@ -253,20 +366,29 @@ def delete_user(request, user_id):
         return render(request, 'chat/partials/empty.html') # Return nothing (removes element)
 
 @staff_member_required
+@staff_member_required
 def delete_chat_session(request, session_id):
     if request.method == "POST":
         session = get_object_or_404(ChatSession, id=session_id)
         session.delete()
-        return render(request, 'chat/partials/empty.html')
+        return HttpResponse(status=200)
 
 @login_required
 def delete_user_chat_session(request, session_id):
     """Allow users to delete their own chat sessions"""
     if request.method == "POST":
         session = get_object_or_404(ChatSession, id=session_id, user=request.user)
+        
+        # Prevent deletion of empty conversations (defensive check)
+        message_count = session.messages.count()
+        if message_count == 0:
+            return HttpResponse(status=204)  # No content, just ignore the request
+        
         session.delete()
         logger.info(f"User {request.user.id} deleted chat session {session_id}")
-        # Redirect to main chat page or create new session
+        # For HTMX requests, return a client-side redirect to root (not /chat/)
+        if request.headers.get('HX-Request'):
+            return HttpResponse(status=200, headers={'HX-Redirect': '/'})
         return redirect('chat')
         
 @staff_member_required

@@ -37,7 +37,7 @@ class Document(models.Model):
         return self.title
 
 class Message(models.Model):
-    SESSION_ROLES = [('user', 'User'), ('assistant', 'Nexus AI')]
+    SESSION_ROLES = [('user', 'User'), ('assistant', 'Nexus')]
     
     session = models.ForeignKey(ChatSession, related_name='messages', on_delete=models.CASCADE)
     role = models.CharField(max_length=10, choices=SESSION_ROLES)
