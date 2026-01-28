@@ -20,6 +20,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-(5=%ss($ev6jh!b(=4getbfe+tljwq%4dq^co9d%62n^16n#ut')
 
 # SECURITY WARNING: don't run with debug turned on in production!
+# NOTE: Custom 404 and 500 error pages are only shown when DEBUG=False
+# Set DEBUG=False in production environment variables (.env file)
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')

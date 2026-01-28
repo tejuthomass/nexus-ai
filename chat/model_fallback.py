@@ -15,15 +15,20 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 # Model hierarchy from most powerful to lightest
+# Use actual available models from Google Gen AI API
 MODEL_HIERARCHY = [
-    "gemini-3-flash",            # Primary - most powerful
-    "gemini-2.5-flash",          # Secondary
-    "gemma-3-27b",               # Tertiary
-    "gemma-3-12b",               # Quaternary
-    "gemma-3-4b",                # Quinary
-    "gemma-3-2b",                # Senary
-    "gemini-2.5-flash-lite",     # Septenary
-    "gemma-3-1b",                # Final fallback
+    "gemini-3-flash-preview",
+    "gemini-flash-latest",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-flash-lite-latest",
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash-lite",
+    "gemma-3-27b",
+    "gemma-3-12b",
+    "gemma-3-4b",
+    "gemma-3-2b",
+    "gemma-3-1b"
 ]
 
 # Track global rate limit exhaustion (shared across all users)
@@ -113,6 +118,7 @@ def generate_with_fallback(prompt, system_instruction=""):
     
     # Initialize client
     try:
+        # Create client with API key - works for Gemini Developer API
         client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
     except Exception as e:
         logger.error(f"Failed to initialize Gemini client: {e}")
@@ -195,14 +201,18 @@ def get_model_display_name(model_name):
         str: User-friendly model name
     """
     name_map = {
-        "gemini-3-flash": "Gemini 3 Flash",
+        "gemini-3-flash-preview": "Gemini 3 Flash",
+        "gemini-flash-latest": "Gemini Flash Latest",
         "gemini-2.5-flash": "Gemini 2.5 Flash",
+        "gemini-2.0-flash": "Gemini 2.0 Flash",
+        "gemini-flash-lite-latest": "Gemini Flash Lite Latest",
+        "gemini-2.5-flash-lite": "Gemini 2.5 Flash Lite",
+        "gemini-2.0-flash-lite": "Gemini 2.0 Flash Lite",
         "gemma-3-27b": "Gemma 3 27B",
         "gemma-3-12b": "Gemma 3 12B",
         "gemma-3-4b": "Gemma 3 4B",
         "gemma-3-2b": "Gemma 3 2B",
-        "gemini-2.5-flash-lite": "Gemini 2.5 Flash Lite",
-        "gemma-3-1b": "Gemma 3 1B",
+        "gemma-3-1b": "Gemma 3 1B"
     }
     return name_map.get(model_name, model_name)
 

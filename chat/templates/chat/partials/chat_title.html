@@ -1,18 +1,21 @@
 <div class="flex items-center gap-2 group" id="chat-title-container">
-    <h2 class="font-semibold text-gray-200 truncate max-w-md {% if session.messages.count > 0 %}cursor-text{% endif %}" 
+    <h2 class="font-semibold text-gray-200 truncate max-w-md {% if session.messages.count > 0 %}cursor-text hover:text-white transition{% endif %}" 
         id="title-text-{{ session.id }}"
-        {% if session.messages.count > 0 %}onclick="document.getElementById('edit-btn-{{ session.id }}').click()"{% endif %}>
+        {% if session.messages.count > 0 %}onclick="enterEditMode('{{ session.id }}')"{% endif %}>
         {{ session.title }}
     </h2>
     
     {% if session.messages.count > 0 %}
     <button id="edit-btn-{{ session.id }}"
-            onclick="document.getElementById('title-form-{{ session.id }}').classList.remove('hidden'); document.getElementById('title-text-{{ session.id }}').classList.add('hidden'); this.classList.add('hidden');" 
-            class="text-gray-500 hover:text-white opacity-0 group-hover:opacity-100 transition">
+            onclick="enterEditMode('{{ session.id }}')" 
+            class="text-gray-500 hover:text-white opacity-0 group-hover:opacity-100 transition flex-shrink-0" 
+            title="Rename chat">
         <i class="fas fa-pencil-alt text-xs"></i>
     </button>
 
-    <button class="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition"
+    <!-- Only show delete button for admins -->
+    {% if is_admin %}
+    <button id="delete-btn-{{ session.id }}" class="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition flex-shrink-0"
             hx-post="{% url 'delete_user_chat_session' session.id %}"
             hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
             hx-confirm="Delete this chat session? All messages and attachments will be removed."
@@ -20,17 +23,129 @@
         <i class="fas fa-trash-alt text-xs"></i>
     </button>
     {% endif %}
+    {% endif %}
 
-    <form hx-post="{% url 'rename_chat' session.id %}" 
-          hx-target="#chat-title-container" 
-          hx-swap="outerHTML"
-          id="title-form-{{ session.id }}" 
-          class="hidden flex items-center gap-2">
-        
-        {% csrf_token %}
-        <input type="text" name="new_title" value="{{ session.title }}" 
-               class="bg-[#40414F] text-white border border-gray-600 rounded px-2 py-1 text-sm focus:outline-blue-500" 
-               autofocus
-               onblur="htmx.trigger(this.form, 'submit')">
-    </form>
+    <div id="rename-mode-{{ session.id }}" class="hidden flex items-center gap-2 flex-1">
+        <input type="text" 
+               id="title-input-{{ session.id }}"
+               value="{{ session.title }}" 
+               class="flex-1 bg-[#2a2a2a] text-white border-2 border-[#3d3d3d] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2dd4bf]/60 focus:ring-1 focus:ring-[#2dd4bf]/20 transition-all duration-150 shadow-sm"
+               placeholder="Enter new chat title"
+               maxlength="100"
+               onkeydown="handleTitleKeydown(event, '{{ session.id }}')"
+               onblur="handleTitleBlur('{{ session.id }}')"
+               autofocus>
+    </div>
 </div>
+
+<script>
+function enterEditMode(sessionId) {
+    // Reset input value to current title text - trim whitespace
+    const titleText = document.getElementById('title-text-' + sessionId).textContent.trim();
+    document.getElementById('title-input-' + sessionId).value = titleText;
+    
+    // Hide title text and edit button
+    document.getElementById('title-text-' + sessionId).classList.add('hidden');
+    document.getElementById('edit-btn-' + sessionId).classList.add('hidden');
+    
+    // Hide delete button
+    const deleteBtn = document.getElementById('delete-btn-' + sessionId);
+    if (deleteBtn) {
+        deleteBtn.classList.add('hidden');
+    }
+    
+    // Show rename mode
+    document.getElementById('rename-mode-' + sessionId).classList.remove('hidden');
+    
+    // Focus input with text selected
+    const input = document.getElementById('title-input-' + sessionId);
+    input.focus();
+    input.select();
+}
+
+function exitEditMode(sessionId) {
+    // Hide rename mode
+    document.getElementById('rename-mode-' + sessionId).classList.add('hidden');
+    
+    // Show title text and edit button
+    document.getElementById('title-text-' + sessionId).classList.remove('hidden');
+    document.getElementById('edit-btn-' + sessionId).classList.remove('hidden');
+    
+    // Show delete button
+    const deleteBtn = document.getElementById('delete-btn-' + sessionId);
+    if (deleteBtn) {
+        deleteBtn.classList.remove('hidden');
+    }
+}
+
+function handleTitleKeydown(event, sessionId) {
+    // Submit on Enter
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        saveTitle(sessionId);
+    }
+    // Cancel on Escape
+    else if (event.key === 'Escape') {
+        event.preventDefault();
+        exitEditMode(sessionId);
+    }
+}
+
+function handleTitleBlur(sessionId) {
+    // Auto-save when user clicks outside the input field
+    saveTitle(sessionId);
+}
+
+function saveTitle(sessionId) {
+    const input = document.getElementById('title-input-' + sessionId);
+    // Trim whitespace and normalize multiple spaces
+    let newTitle = input.value.trim();
+    newTitle = newTitle.split(/\s+/).join(' '); // Replace multiple spaces with single space
+    const titleText = document.getElementById('title-text-' + sessionId);
+    const originalTitle = titleText.textContent.trim();
+    
+    // If input is empty, revert to original title
+    if (!newTitle) {
+        exitEditMode(sessionId);
+        return;
+    }
+    
+    // If title hasn't changed, just exit
+    if (newTitle === originalTitle.trim()) {
+        exitEditMode(sessionId);
+        return;
+    }
+    
+    // Update the UI immediately
+    titleText.textContent = newTitle;
+    
+    // Also update in sidebar
+    const sidebarItem = document.querySelector(`a[href*="${sessionId}"] .truncate`);
+    if (sidebarItem) {
+        sidebarItem.textContent = newTitle.trim();
+    }
+    
+    exitEditMode(sessionId);
+    
+    // Send AJAX request to save to server
+    const csrfTokenElement = document.getElementById('csrf-token') || document.querySelector('[name=csrfmiddlewaretoken]');
+    const csrfToken = csrfTokenElement ? csrfTokenElement.value : '';
+    
+    fetch(`/chat/${sessionId}/rename/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: `new_title=${encodeURIComponent(newTitle)}`
+    })
+    .catch(error => {
+        console.error('Error saving title:', error);
+        // Revert to original on error
+        titleText.textContent = originalTitle;
+        if (sidebarItem) {
+            sidebarItem.textContent = originalTitle;
+        }
+    });
+}
+</script>

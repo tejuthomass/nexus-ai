@@ -21,7 +21,7 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 # File upload validation settings
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 ALLOWED_EXTENSIONS = ['.pdf']
 
 @login_required
@@ -51,12 +51,16 @@ def chat_view(request, session_id=None):
         
         if hx_target == 'title':
             # Return just the updated title
-            return render(request, 'chat/partials/chat_title.html', {'session': current_session})
+            return render(request, 'chat/partials/chat_title.html', {
+                'session': current_session,
+                'is_admin': user.is_staff
+            })
         elif hx_target == 'sidebar':
             # Return just the updated sidebar list
             return render(request, 'chat/partials/sidebar_list.html', {
                 'chat_sessions': all_sessions,
-                'current_session': current_session
+                'current_session': current_session,
+                'is_admin': user.is_staff
             })
 
     # 3. Handle File Upload
@@ -73,8 +77,10 @@ def chat_view(request, session_id=None):
         
         # Validate file size
         if uploaded_file.size > MAX_FILE_SIZE:
+            file_size_mb = round(uploaded_file.size / (1024 * 1024), 2)
+            max_size_mb = MAX_FILE_SIZE // (1024 * 1024)
             return render(request, 'chat/partials/system_message.html', {
-                'content': f"❌ File too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)}MB.",
+                'content': f"❌ File too large!\n\n📊 File size: {file_size_mb}MB\n📏 Maximum allowed: {max_size_mb}MB\n\n💡 Try compressing the PDF or splitting it into smaller files.",
                 'error': True
             })
         
@@ -200,7 +206,8 @@ def chat_view(request, session_id=None):
             assistant_message = Message.objects.create(
                 session=current_session, 
                 role='assistant', 
-                content=ai_text
+                content=ai_text,
+                model_used=model_used
             )
             
             # Rename Session if it's the first message
@@ -265,7 +272,8 @@ def chat_view(request, session_id=None):
         'current_session': current_session,
         'chat_sessions': all_sessions,
         'documents': session_docs, # Only show docs for this chat
-        'messages': messages
+        'messages': messages,
+        'is_admin': user.is_staff  # Pass admin status to template
     })
 
 @login_required
@@ -295,8 +303,14 @@ def rename_chat(request, session_id):
         
         new_title = request.POST.get('new_title')
         if new_title:
-            session.title = new_title
-            session.save()
+            # Trim leading/trailing whitespace and normalize multiple spaces
+            new_title = new_title.strip()
+            # Remove multiple consecutive spaces
+            new_title = ' '.join(new_title.split())
+            
+            if new_title:  # Ensure it's not empty after trimming
+                session.title = new_title
+                session.save()
             
         # Return the new title as simple HTML to swap
         return render(request, 'chat/partials/chat_title.html', {'session': session})

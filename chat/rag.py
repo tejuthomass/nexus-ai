@@ -71,12 +71,16 @@ def ingest_document(file_identifier, text_content):
             try:
                 # Batch embed multiple chunks in one API call
                 response = google_client.models.embed_content(
-                    model="text-embedding-004",
-                    contents=batch_chunks
+                    model="gemini-embedding-001",
+                    contents=batch_chunks,
+                    config={
+                        'output_dimensionality': 768
+                    },
                 )
                 
                 # Process embeddings for this batch
-                for idx, (chunk_idx, chunk) in enumerate(enumerate(batch_chunks, batch_start)):
+                for idx, chunk in enumerate(batch_chunks):
+                    chunk_idx = batch_start + idx
                     embedding = response.embeddings[idx].values
                     vector_id = f"{file_identifier}_{chunk_idx}"
                     
@@ -121,8 +125,11 @@ def retrieve_context(query, session_id=None):
         google_client, index = get_clients()
 
         response = google_client.models.embed_content(
-            model="text-embedding-004",
-            contents=query
+            model="gemini-embedding-001",
+            contents=query,
+            config={
+                'output_dimensionality': 768
+            },
         )
         query_embedding = response.embeddings[0].values
 

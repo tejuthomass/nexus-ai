@@ -9,15 +9,33 @@
             {% endif %}
             <span>{{ content }}</span>
         </div>
-        <button onclick="this.closest('div').parentElement.remove()" class="{% if error %}text-red-300{% else %}text-green-400{% endif %} hover:text-white">
+        <button type="button" onclick="this.closest('div').parentElement.remove()" class="{% if error %}text-red-300{% else %}text-green-400{% endif %} hover:text-white">
             <i class="fas fa-times"></i>
         </button>
     </div>
 </div>
 
-{% if disable_chat %}
 <script>
+    // Auto-dismiss notification in chat container
+    (function() {
+        const notification = document.querySelector('.notification-container') ? null : document.querySelector('[class*="bg-"][class*="border-"]');
+        if (!notification) return;
+        
+        const isError = notification.classList.contains('bg-red-500');
+        const duration = isError ? 5500 : 3500; // Error: 5.5s, Success: 3.5s
+        
+        setTimeout(function() {
+            notification.style.animation = 'fadeOut 0.3s ease-out forwards';
+            setTimeout(function() {
+                if (notification.parentElement) {
+                    notification.parentElement.remove();
+                }
+            }, 300);
+        }, duration);
+    })();
+    
+    {% if disable_chat %}
     // Disable chat interface when all models are exhausted
     disableChatInterface('{{ content|escapejs }}');
+    {% endif %}
 </script>
-{% endif %}

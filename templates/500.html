@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - Server Error | Nexus Core</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(to bottom, #0f0f0f, #171717);
+            min-height: 100vh;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #424242; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #616161; }
+        
+        /* Shake Animation */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .animate-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        /* Pulse Glow */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.6); }
+        }
+        
+        .animate-pulse-glow {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="text-gray-100">
+    
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="text-center">
+            <!-- Animated Error Icon -->
+            <div class="mb-8 flex justify-center">
+                <div class="animate-pulse-glow">
+                    <div class="w-24 h-24 bg-gradient-to-br from-red-600 to-red-700 rounded-full flex items-center justify-center shadow-lg animate-shake">
+                        <i class="fas fa-server text-5xl text-white"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Error Code -->
+            <h1 class="text-9xl font-black bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-red-600 mb-4">
+                500
+            </h1>
+            
+            <!-- Error Title -->
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">
+                Server Malfunction
+            </h2>
+            
+            <!-- Error Description -->
+            <p class="text-xl text-gray-300 mb-8 max-w-md mx-auto leading-relaxed">
+                Something went wrong on our end. Our engineers are probably scrambling to fix it right now!
+                <span class="block mt-2 text-base text-gray-400">Don't worry, this isn't your fault! 🛠️</span>
+            </p>
+            
+            <!-- Error Details -->
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-8 max-w-md mx-auto text-left">
+                <div class="flex items-center gap-3 mb-3">
+                    <i class="fas fa-triangle-exclamation text-orange-500"></i>
+                    <span class="text-sm font-semibold text-gray-300">Error Details</span>
+                </div>
+                <ul class="text-sm text-gray-400 space-y-2">
+                    <li class="flex items-start gap-2">
+                        <span class="text-orange-400 font-bold">⚠</span>
+                        <span>The server encountered an unexpected error</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="text-orange-400 font-bold">⚠</span>
+                        <span>Our team has been notified and is working on a fix</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="text-orange-400 font-bold">⚠</span>
+                        <span>Please try again in a few moments</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+                <a href="/" class="px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-red-500/20 flex items-center justify-center gap-2">
+                    <i class="fas fa-home"></i>
+                    Back to Home
+                </a>
+                <button onclick="location.reload()" class="px-8 py-3 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 border border-gray-700 flex items-center justify-center gap-2">
+                    <i class="fas fa-rotate-right"></i>
+                    Try Again
+                </button>
+            </div>
+            
+            <!-- Support Message -->
+            <div class="text-center text-sm text-gray-500">
+                <p class="mb-2">Need immediate assistance? Contact our support team!</p>
+                <p>Error Reference ID: {{ request_path }} | Time: {{ current_time }}</p>
+            </div>
+        </div>
+    </div>
+    
+</body>
+</html>

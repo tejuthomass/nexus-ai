@@ -13,14 +13,14 @@
               hx-post="{% url 'chat_session' session.id %}" 
               hx-encoding="multipart/form-data"
               hx-target="#attachments-list"
-              hx-indicator="#sidebar-upload-indicator"
-              hx-on::before-request="disableChatInput()"
-              hx-on::after-request="enableChatInput(); this.reset(); updateFileLabel('');"
+              hx-swap="innerHTML"
+              hx-on::before-request="showUploadIndicator(); disableChatInput()"
+              hx-on::after-request="hideUploadIndicator(); enableChatInput(); resetFileInput();"
               class="space-y-2">
             {% csrf_token %}
             
             <!-- Upload Indicator -->
-            <div id="sidebar-upload-indicator" class="htmx-indicator mb-2 p-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+            <div id="sidebar-upload-indicator" class="mb-2 p-2 bg-blue-500/10 border border-blue-500/30 rounded-lg hidden">
                 <div class="flex items-center gap-2 text-xs">
                     <i class="fas fa-circle-notch fa-spin text-blue-400"></i>
                     <span class="text-blue-300">Processing PDF...</span>
@@ -37,14 +37,14 @@
                    name="pdf_file" 
                    accept=".pdf" 
                    class="hidden"
-                   onchange="updateFileLabel(this.files[0]?.name || ''); this.form.dispatchEvent(new Event('submit', {bubbles: true}));">
+                   onchange="validateAndUploadFile(this)">
             
             <!-- File Info -->
             <div id="file-label" class="text-xs text-gray-500 text-center min-h-[16px]"></div>
             
             <!-- Size Limit Info -->
             <div class="text-xs text-gray-600 text-center">
-                <i class="fas fa-info-circle"></i> Max size: 10MB
+                <i class="fas fa-info-circle"></i> Max size: 5MB
             </div>
         </form>
         
@@ -59,6 +59,9 @@
 </div>
 
 <script>
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE_MB = 5;
+
 function updateFileLabel(filename) {
     const label = document.getElementById('file-label');
     if (filename) {
@@ -68,6 +71,91 @@ function updateFileLabel(filename) {
         label.textContent = '';
         label.classList.remove('text-green-400');
     }
+}
+
+function showUploadIndicator() {
+    const indicator = document.getElementById('sidebar-upload-indicator');
+    if (indicator) {
+        indicator.classList.remove('hidden');
+    }
+}
+
+function hideUploadIndicator() {
+    const indicator = document.getElementById('sidebar-upload-indicator');
+    if (indicator) {
+        indicator.classList.add('hidden');
+    }
+}
+
+function resetFileInput() {
+    const fileInput = document.getElementById('sidebar-pdf-upload');
+    if (fileInput) {
+        fileInput.value = '';
+    }
+    updateFileLabel('');
+}
+
+function validateAndUploadFile(input) {
+    const file = input.files[0];
+    const messageDiv = document.getElementById('upload-message');
+    const form = document.getElementById('pdf-upload-form');
+    
+    // Clear previous messages
+    messageDiv.innerHTML = '';
+    
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+        showErrorMessage(messageDiv, '❌ Invalid file type. Only PDF files are allowed.');
+        input.value = '';
+        return;
+    }
+    
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        showErrorMessage(
+            messageDiv,
+            '❌ File too large!<br><br>📊 File size: ' + fileSizeMB + 'MB<br>📏 Maximum allowed: ' + MAX_FILE_SIZE_MB + 'MB<br><br>💡 Try compressing the PDF or splitting it into smaller files.'
+        );
+        input.value = '';
+        updateFileLabel('');
+        return;
+    }
+    
+    // File is valid, show filename and processing indicator
+    updateFileLabel(file.name);
+    showUploadIndicator();
+    disableChatInput();
+    
+    // Create FormData and submit
+    const formData = new FormData(form);
+    const sessionId = window.location.pathname.split('/')[2];
+    
+    fetch('/chat/' + sessionId + '/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.text())
+    .then(html => {
+        // Update the attachments list
+        const listContainer = document.getElementById('attachments-list');
+        listContainer.innerHTML = html;
+        
+        // Show success notification using the centralized notification system
+        // The notification will auto-dismiss after 4 seconds
+        showNotification('✓ PDF uploaded successfully!', 'success', 4000);
+    })
+    .catch(error => {
+        console.error('Upload failed:', error);
+        showErrorMessage(messageDiv, '❌ Upload failed. Please try again.');
+    })
+    .finally(() => {
+        hideUploadIndicator();
+        enableChatInput();
+        resetFileInput();
+    });
 }
 
 function disableChatInput() {
@@ -92,5 +180,13 @@ function enableChatInput() {
     if (submitBtn) {
         submitBtn.disabled = false;
     }
+}
+
+function showErrorMessage(container, message) {
+    container.innerHTML = `
+        <div class="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-xs text-red-300">
+            ${message}
+        </div>
+    `;
 }
 </script>
