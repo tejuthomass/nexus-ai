@@ -12,7 +12,17 @@
             <i class="fas fa-bolt"></i>
         </div>
         <div class="flex-1 min-w-0 pt-1">
-            <div class="font-semibold text-sm text-green-400 mb-2">Nexus Core</div>
+            <div class="flex items-center gap-2 mb-2">
+                <div class="font-semibold text-sm text-green-400">Nexus Core</div>
+                {% if model_used %}
+                <div class="relative model-info-container group/model">
+                    <i class="fas fa-circle-info text-xs text-gray-500 hover:text-gray-400 cursor-help transition"></i>
+                    <div class="absolute left-0 bottom-full mb-2 hidden group-hover/model:block bg-[#1a1a1a] text-gray-300 text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap border border-white/10 z-50">
+                        {{ model_used }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
             <div class="prose prose-invert max-w-none text-gray-200 leading-relaxed">
                 {{ response_html|safe }}
             </div>

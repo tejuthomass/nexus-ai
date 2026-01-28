@@ -14,3 +14,10 @@
         </button>
     </div>
 </div>
+
+{% if disable_chat %}
+<script>
+    // Disable chat interface when all models are exhausted
+    disableChatInterface('{{ content|escapejs }}');
+</script>
+{% endif %}

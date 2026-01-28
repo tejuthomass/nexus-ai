@@ -298,8 +298,6 @@
                     <span>Nexus Core</span>
                 </a>
                 {% endif %}
-                <span class="opacity-50">Model:</span>
-                <span class="text-gray-200 font-medium">Gemini 2.5 Flash</span>
             </div>
         </div>
 
@@ -344,13 +342,19 @@
                     <i class="fas fa-circle-notch fa-spin"></i>
                 </div>
                 <div class="flex items-center text-gray-500 text-sm pt-1">
-                    <span class="animate-pulse">Nexus is thinking...</span>
+                    <span class="animate-pulse">Processing...</span>
                 </div>
             </div>
         </div>
 
         <div class="fixed bottom-0 right-0 lg:right-[280px] bg-gradient-to-t from-[#212121] via-[#212121]/95 to-transparent pt-10 pb-6 px-4 z-20" style="left: 260px;">
             <div class="max-w-3xl mx-auto w-full">
+
+                <!-- Service unavailable message -->
+                <div id="service-unavailable-message" class="hidden mb-4 p-4 bg-red-900/20 border border-red-900/40 rounded-lg text-red-400 text-sm text-center">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <span>Service temporarily unavailable. All model rate limits reached. Please try again later.</span>
+                </div>
 
                 <form hx-post="{% url 'chat_session' current_session.id %}"
                       hx-indicator="#loading-spinner" 
@@ -415,6 +419,85 @@
                 sidebar.classList.add('mobile-hidden');
             }
         }
+    });
+
+    // Handle service exhaustion state
+    function disableChatInterface(message) {
+        const form = document.getElementById('chat-form');
+        const textarea = document.getElementById('chat-input-textarea');
+        const submitBtn = document.getElementById('chat-submit-btn');
+        const unavailableMsg = document.getElementById('service-unavailable-message');
+        
+        if (form && textarea && submitBtn) {
+            textarea.disabled = true;
+            textarea.placeholder = "Service temporarily unavailable";
+            submitBtn.disabled = true;
+            form.classList.add('opacity-60', 'pointer-events-none');
+        }
+        
+        if (unavailableMsg) {
+            if (message) {
+                unavailableMsg.querySelector('span').textContent = message;
+            }
+            unavailableMsg.classList.remove('hidden');
+        }
+    }
+
+    function enableChatInterface() {
+        const form = document.getElementById('chat-form');
+        const textarea = document.getElementById('chat-input-textarea');
+        const submitBtn = document.getElementById('chat-submit-btn');
+        const unavailableMsg = document.getElementById('service-unavailable-message');
+        
+        if (form && textarea && submitBtn) {
+            textarea.disabled = false;
+            textarea.placeholder = "Message Nexus...";
+            submitBtn.disabled = false;
+            form.classList.remove('opacity-60', 'pointer-events-none');
+        }
+        
+        if (unavailableMsg) {
+            unavailableMsg.classList.add('hidden');
+        }
+    }
+
+    // Listen for HTMX response errors to check for exhaustion
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+        const xhr = evt.detail.xhr;
+        const response = xhr.responseText;
+        
+        // Check if response contains exhaustion error
+        if (response && response.includes('All model rate limits reached')) {
+            const match = response.match(/Service temporarily unavailable\. All model rate limits reached\. Please try again later\./);
+            const message = match ? match[0] : 'Service temporarily unavailable. All model rate limits reached. Please try again later.';
+            disableChatInterface(message);
+        }
+    });
+
+    // Check service availability on page load
+    async function checkServiceAvailability() {
+        try {
+            const response = await fetch('{% url "check_availability" %}');
+            const data = await response.json();
+            
+            if (!data.available) {
+                disableChatInterface(data.message);
+                // Check again in 30 seconds
+                setTimeout(checkServiceAvailability, 30000);
+            } else {
+                enableChatInterface();
+            }
+        } catch (error) {
+            console.error('Failed to check service availability:', error);
+        }
+    }
+
+    // Check availability on page load
+    window.addEventListener('DOMContentLoaded', function() {
+        checkServiceAvailability();
+        
+        // Periodically check availability every 60 seconds
+        setInterval(checkServiceAvailability, 60000);
     });
 </script>
 </html>

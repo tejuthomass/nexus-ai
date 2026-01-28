@@ -12,4 +12,5 @@ urlpatterns = [
     path('dashboard/chat/<int:session_id>/delete/', views.delete_chat_session, name='delete_chat_session'),
     path('dashboard/chat/<int:session_id>/view/', views.view_chat_readonly, name='view_chat_readonly'),
     path('api/admin-chat/<int:session_id>/', views.api_admin_chat, name='api_admin_chat'),
+    path('api/check-availability/', views.check_availability, name='check_availability'),
 ]

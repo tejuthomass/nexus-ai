@@ -12,9 +12,10 @@ from .models import ChatSession, Message, Document
 from django.contrib.auth.decorators import login_required
 from dotenv import load_dotenv
 from .rag import ingest_document, retrieve_context, extract_text_from_pdf, delete_document_vectors
+from .model_fallback import generate_with_fallback, get_model_display_name, check_service_availability, ModelExhaustionError
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.models import User
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -22,63 +23,6 @@ logger = logging.getLogger(__name__)
 # File upload validation settings
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 ALLOWED_EXTENSIONS = ['.pdf']
-
-# API retry settings
-MAX_RETRIES = 3
-RETRY_DELAY = 1  # Initial delay in seconds
-
-def generate_ai_response_with_retry(client, model, prompt, max_retries=MAX_RETRIES):
-    """
-    Generate AI response with automatic retry logic for transient errors.
-    
-    Args:
-        client: Gemini API client
-        model: Model name (e.g., 'gemini-2.5-flash')
-        prompt: The prompt to send
-        max_retries: Maximum number of retry attempts
-    
-    Returns:
-        Response text from the AI
-        
-    Raises:
-        Exception: If all retries fail or on non-retryable errors
-    """
-    last_error = None
-    
-    for attempt in range(max_retries):
-        try:
-            response = client.models.generate_content(model=model, contents=prompt)
-            return response.text
-            
-        except Exception as e:
-            error_str = str(e)
-            last_error = e
-            
-            # Check if error is retryable (503, 429, or other transient errors)
-            is_retryable = (
-                '503' in error_str or 
-                '429' in error_str or 
-                'overloaded' in error_str.lower() or
-                'rate limit' in error_str.lower() or
-                'temporarily unavailable' in error_str.lower()
-            )
-            
-            if is_retryable and attempt < max_retries - 1:
-                # Calculate exponential backoff delay
-                delay = RETRY_DELAY * (2 ** attempt)
-                logger.warning(
-                    f"API request failed (attempt {attempt + 1}/{max_retries}): {error_str}. "
-                    f"Retrying in {delay}s..."
-                )
-                time.sleep(delay)
-                continue
-            else:
-                # Non-retryable error or max retries reached
-                logger.error(f"API request failed permanently: {error_str}")
-                raise
-    
-    # If we get here, all retries failed
-    raise last_error
 
 @login_required
 def chat_view(request, session_id=None):
@@ -205,18 +149,6 @@ def chat_view(request, session_id=None):
             # Check if this is the first message (before creating it)
             is_first_message = current_session.messages.count() == 0
             
-            # Save User Message
-            Message.objects.create(session=current_session, role='user', content=user_message)
-            
-            # Rename Session if it's the first message
-            if current_session.title == "New Conversation":
-                # Generate a short title (First 30 chars)
-                current_session.title = user_message[:30] + ("..." if len(user_message) > 30 else "")
-                current_session.save()
-
-            # Update timestamp so this chat moves to top of list
-            current_session.save() 
-
             # --- HYBRID INTELLIGENCE LOGIC ---
             has_documents = Document.objects.filter(session=current_session).exists()
             
@@ -248,27 +180,49 @@ def chat_view(request, session_id=None):
                 Engage in normal conversation, answer questions, and assist the user.
                 """
 
-            # Generate Response
+            # Generate Response with automatic fallback (BEFORE saving to DB)
             prompt = f"""
             {system_instruction}
             
             USER QUESTION: {user_message}
             """
+            
+            # Use multi-model fallback system - this will raise exception if it fails
+            ai_text, model_used = generate_with_fallback(prompt, system_instruction="")
+            
+            # IMPORTANT: Only save to database AFTER successful AI response
+            # This prevents "ghost messages" (user messages without AI replies) when errors occur
+            
+            # Save User Message
+            user_msg = Message.objects.create(session=current_session, role='user', content=user_message)
+            
+            # Save assistant response with metadata about which model was used
+            assistant_message = Message.objects.create(
+                session=current_session, 
+                role='assistant', 
+                content=ai_text
+            )
+            
+            # Rename Session if it's the first message
+            if current_session.title == "New Conversation":
+                # Generate a short title (First 30 chars)
+                current_session.title = user_message[:30] + ("..." if len(user_message) > 30 else "")
+                current_session.save()
 
-            client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+            # Update timestamp so this chat moves to top of list
+            current_session.save()
             
-            # Use retry logic for API calls
-            ai_text = generate_ai_response_with_retry(client, 'gemini-2.5-flash', prompt)
+            # Store model info in session for UI display
+            request.session[f'model_used_{assistant_message.id}'] = model_used
             
-            assistant_message = Message.objects.create(session=current_session, role='assistant', content=ai_text)
-            
-            logger.info(f"Chat message processed for session {current_session.id}")
+            logger.info(f"Chat message processed for session {current_session.id} using {model_used}")
             rendered_html = assistant_message.get_html_content()
             
             # Build response with HTMX headers for first message
             response = render(request, 'chat/partials/message.html', {
                 'message': {'content': user_message},
-                'response_html': mark_safe(rendered_html)
+                'response_html': mark_safe(rendered_html),
+                'model_used': get_model_display_name(model_used)
             })
             
             # If this was the first message, trigger UI updates
@@ -279,16 +233,22 @@ def chat_view(request, session_id=None):
                 response['HX-Push-Url'] = f'/chat/{current_session.id}/'
             
             return response
+            
+        except ModelExhaustionError as e:
+            # All models exhausted - disable chat interface
+            logger.error(f"All models exhausted: {e}")
+            return render(request, 'chat/partials/system_message.html', {
+                'content': str(e),
+                'error': True,
+                'disable_chat': True
+            })
+            
         except Exception as e:
             error_str = str(e)
             logger.error(f"Chat message processing failed: {e}")
             
             # Provide specific error messages based on error type
-            if '503' in error_str or 'overloaded' in error_str.lower():
-                error_message = "⚠️ Nexus is currently overloaded. We tried multiple times but couldn't get through. Please try again in a moment."
-            elif '429' in error_str or 'rate limit' in error_str.lower():
-                error_message = "⚠️ Rate limit reached. Please wait a moment before sending another message."
-            elif 'api_key' in error_str.lower() or 'authentication' in error_str.lower():
+            if 'api_key' in error_str.lower() or 'authentication' in error_str.lower():
                 error_message = "❌ API authentication error. Please contact the administrator."
             else:
                 error_message = "❌ Failed to generate response. Please try again."
@@ -435,4 +395,14 @@ def api_admin_chat(request, session_id):
         'user': session.user.username,
         'messages': messages_data,
         'documents': documents_data
+    })
+
+
+@login_required
+def check_availability(request):
+    """API endpoint to check if AI service is available"""
+    is_available, message = check_service_availability()
+    return JsonResponse({
+        'available': is_available,
+        'message': message
     })

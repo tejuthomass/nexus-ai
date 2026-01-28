@@ -13,7 +13,8 @@ def get_clients():
     try:
         google_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
         pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
-        index = pc.Index("nexus-index") 
+        index_name = os.getenv("PINECONE_INDEX_NAME", "nexus-index")
+        index = pc.Index(index_name) 
         return google_client, index
     except Exception as e:
         logger.error(f"Failed to initialize clients: {e}")
@@ -46,10 +47,15 @@ def ingest_document(file_identifier, text_content):
     try:
         google_client, index = get_clients()
         
-        # Split text into larger chunks to reduce API calls
-        # Use 2000 chars per chunk for better content context and fewer embeddings
+        # Split text into chunks with overlap to prevent context fragmentation
+        # Use 2000 chars per chunk with 200-char overlap for semantic continuity
         chunk_size = 2000
-        chunks = [text_content[i:i+chunk_size] for i in range(0, len(text_content), chunk_size)]
+        chunk_overlap = 200
+        chunks = []
+        for i in range(0, len(text_content), chunk_size - chunk_overlap):
+            chunk = text_content[i:i+chunk_size]
+            if chunk.strip():  # Only add non-empty chunks
+                chunks.append(chunk)
         
         if not chunks:
             raise ValueError("No text chunks to process")
