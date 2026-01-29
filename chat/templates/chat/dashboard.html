@@ -7,28 +7,64 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/theme.css">
     <style>
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
         body { 
             font-family: 'Inter', sans-serif; 
-            background: linear-gradient(to bottom, #0f0f0f, #171717);
+            background: linear-gradient(135deg, #05080f 0%, #0d1621 50%, #050a12 100%);
             min-height: 100vh;
         }
         
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #424242; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #616161; }
+        ::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #f87171; }
         
         /* Animation */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
         
+        @keyframes fadeInLeft {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
         .animate-fadeIn {
-            animation: fadeIn 0.3s ease-out forwards;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        .animate-fadeInLeft {
+            animation: fadeInLeft 0.5s ease-out forwards;
+        }
+        
+        /* Gradient border animation */
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .gradient-border {
+            background: linear-gradient(135deg, #ef4444 0%, #f97316 50%, #dc2626 100%);
+            background-size: 200% 200%;
+            animation: gradientShift 3s ease infinite;
+        }
+        
+        /* Card hover effect */
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
         }
     </style>
 </head>
@@ -36,37 +72,98 @@
 
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
-        <div class="flex items-center justify-between mb-8 animate-fadeIn">
-            <div class="flex items-center gap-4">
-                <div class="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg shadow-red-500/30">
-                    <i class="fas fa-shield-halved text-2xl text-white"></i>
+        <div class="flex items-center justify-between mb-12 animate-fadeInLeft">
+            <div class="flex items-center gap-5">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 via-orange-500 to-red-600 flex items-center justify-center shadow-2xl shadow-red-500/40 gradient-border p-[2px]">
+                    <div class="w-full h-full bg-black rounded-2xl flex items-center justify-center">
+                        <i class="fas fa-shield-halved text-3xl text-red-400"></i>
+                    </div>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-bold text-white tracking-tight">Nexus Core</h1>
-                    <p class="text-sm text-gray-400 mt-1">Admin Dashboard • Monitor & Manage</p>
+                    <h1 class="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-red-400 via-orange-400 to-red-500 tracking-tight">Nexus Core</h1>
+                    <p class="text-sm text-gray-400 mt-2 flex items-center gap-2.5 font-medium">
+                        <i class="fas fa-gauge text-red-400"></i>
+                        <span>Admin Dashboard</span>
+                        <span class="text-gray-600">•</span>
+                        <span>User Management</span>
+                    </p>
                 </div>
             </div>
             
             <div class="flex gap-3">
-                <a href="/admin/auth/user/add/" target="_blank" class="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 shadow-lg shadow-green-600/20">
-                    <i class="fas fa-user-plus"></i> 
-                    Add User
+                <button data-theme-toggle class="p-3 bg-white/8 hover:bg-white/12 border border-white/15 rounded-xl transition-all duration-300 backdrop-blur-sm" aria-label="Toggle theme">
+                    <i class="fas fa-sun text-gray-300"></i>
+                </button>
+                <a href="{{ admin_url }}auth/user/add/" target="_blank" class="px-5 py-3 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 shadow-xl shadow-emerald-600/30 hover:shadow-emerald-600/50 transform hover:scale-105">
+                    <i class="fas fa-user-plus text-xs"></i> 
+                    <span>Add User</span>
                 </a>
-                <a href="{% url 'chat' %}" class="px-4 py-2.5 bg-[#2F2F2F] hover:bg-[#3F3F3F] border border-white/10 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2">
-                    <i class="fas fa-arrow-left"></i> 
-                    Back to Chat
+                <a href="{% url 'chat' %}" class="px-5 py-3 bg-white/8 hover:bg-white/12 border border-white/15 hover:border-white/25 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 backdrop-blur-sm">
+                    <i class="fas fa-chevron-left text-xs"></i> 
+                    <span>Back</span>
                 </a>
             </div>
         </div>
 
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 animate-fadeIn" style="animation-delay: 0.1s;">
+            <div class="p-6 rounded-3xl bg-gradient-to-br from-blue-500/12 to-blue-600/5 border border-blue-500/25 backdrop-blur-sm card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Total Users</p>
+                        <p class="text-4xl font-black text-white">{{ user_data|length }}</p>
+                    </div>
+                    <div class="w-14 h-14 rounded-2xl bg-blue-500/20 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                        <i class="fas fa-users text-2xl text-blue-400"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-6 rounded-3xl bg-gradient-to-br from-purple-500/12 to-purple-600/5 border border-purple-500/25 backdrop-blur-sm card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Active Sessions</p>
+                        <p class="text-4xl font-black text-white">{% for data in user_data %}{{ data.session_count|add:0 }}{% if not forloop.last %}+{% endif %}{% endfor %}</p>
+                    </div>
+                    <div class="w-14 h-14 rounded-2xl bg-purple-500/20 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                        <i class="fas fa-message-dots text-2xl text-purple-400"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-6 rounded-3xl bg-gradient-to-br from-emerald-500/12 to-green-600/5 border border-emerald-500/25 backdrop-blur-sm card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">System Status</p>
+                        <p class="text-lg font-bold text-emerald-400 flex items-center gap-2">
+                            <i class="fas fa-circle-check"></i>
+                            <span>Operational</span>
+                        </p>
+                    </div>
+                    <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                        <i class="fas fa-server text-2xl text-emerald-400"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- User List -->
-        <div class="grid gap-6 animate-fadeIn" id="user-list-container" style="animation-delay: 0.1s;">
-            {% include 'chat/partials/user_list.html' with user_data=user_data %}
+        <div class="animate-fadeIn" style="animation-delay: 0.2s;">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                    <i class="fas fa-users-cog text-red-400"></i>
+                    User Management
+                </h2>
+            </div>
+            <div class="grid gap-6" id="user-list-container">
+                {% include 'chat/partials/user_list.html' with user_data=user_data %}
+            </div>
         </div>
     </div>
 
     <!-- Admin Chat Modal -->
     {% include 'chat/partials/admin_chat_modal.html' %}
 
+    <script src="/static/js/theme.js"></script>
 </body>
 </html>

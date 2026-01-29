@@ -3,26 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus</title>
+    <title>Nexus - Chat</title>
     
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/theme.css">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #212121; }
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(135deg, #05080f 0%, #0d1621 50%, #050a12 100%);
+        }
         
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #424242; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #616161; }
+        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #60a5fa; }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .htmx-indicator { display: none; }
@@ -44,7 +53,7 @@
             margin-bottom: 1rem;
         }
         
-        /* Improved prose styling for AI responses */
+        /* Improved prose styling for assistant responses */
         .prose {
             color: #e5e7eb;
             max-width: none;
@@ -394,46 +403,46 @@
     </script>
 
     <!-- Left Sidebar - Chat History -->
-    <div class="w-[260px] bg-[#171717] flex flex-col flex-shrink-0 transition-all duration-300 relative z-20 md:flex mobile-hidden border-r border-white/5" id="sidebar">
+    <div class="w-[260px] bg-gradient-to-b from-[#0d1621] to-[#05080f] flex flex-col flex-shrink-0 transition-all duration-300 relative z-20 md:flex mobile-hidden border-r border-white/5 shadow-2xl" id="sidebar">
         
         <div class="p-3 mb-2">
             <a href="{% url 'new_chat' %}" 
-               class="flex items-center gap-3 px-3 py-3 rounded-lg border border-white/10 hover:bg-[#212121] transition cursor-pointer group"
+               class="flex items-center gap-3 px-3 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600/15 to-green-600/10 border border-emerald-500/25 hover:border-emerald-500/50 hover:from-emerald-600/25 hover:to-green-600/20 transition-all duration-300 cursor-pointer group shadow-lg hover:shadow-emerald-500/20"
                id="new-chat-btn"
                onclick="return preventNewChatClick(event)">
-                <i class="fas fa-plus text-white text-sm"></i>
-                <span class="text-sm font-medium text-white flex-1">New chat</span>
-                <i class="far fa-pen-to-square text-gray-500 opacity-0 group-hover:opacity-100 transition text-sm"></i>
+                <i class="fas fa-plus text-emerald-400 text-sm"></i>
+                <span class="text-sm font-semibold text-white flex-1">New chat</span>
+                <i class="far fa-pen-to-square text-emerald-400 opacity-0 group-hover:opacity-100 transition-all duration-300 text-xs"></i>
             </a>
         </div>
 
         <div class="flex-1 overflow-y-auto px-3 pb-2 no-scrollbar">
-            <div class="text-xs font-medium text-gray-500 px-3 py-2 mb-1">Recent</div>
+            <div class="text-xs font-bold text-gray-500 px-3 py-2 mb-1 uppercase tracking-wider">Recent Chats</div>
             <div class="space-y-1" id="sidebar-chat-list">
                 {% for session in chat_sessions %}
                 <a href="{% url 'chat_session' session.id %}" 
-                   class="group flex items-center gap-3 px-3 py-3 text-sm rounded-lg transition-colors relative overflow-hidden
-                          {% if session.id == current_session.id %} bg-[#212121] text-white active-chat {% else %} text-gray-400 hover:bg-[#212121] hover:text-white {% endif %}"
+                   class="group flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl transition-all duration-200 relative overflow-hidden
+                          {% if session.id == current_session.id %} bg-gradient-to-r from-emerald-600/20 to-green-600/15 border border-emerald-500/30 text-white active-chat shadow-lg {% else %} text-gray-400 hover:bg-white/5 hover:text-white border border-transparent hover:border-white/10 {% endif %}"
                    onclick="return preventChatReselect(event, '{{ session.id }}')">
-                    <i class="far fa-message text-sm"></i>
-                    <div class="flex-1 truncate relative z-10 text-sm font-light">{{ session.title }}</div>
+                    <i class="fas fa-message text-xs {% if session.id == current_session.id %}text-emerald-400{% endif %}"></i>
+                    <div class="flex-1 truncate relative z-10 text-xs {% if session.id == current_session.id %}font-semibold{% else %}font-light{% endif %}">{{ session.title }}</div>
                 </a>
                 {% endfor %}
             </div>
         </div>
 
-        <div class="p-2 border-t border-white/10 bg-[#171717]">
-            <div class="flex items-center justify-between px-3 py-3 hover:bg-[#212121] rounded-lg cursor-pointer group transition">
+        <div class="p-3 border-t border-white/5 bg-gradient-to-b from-transparent to-black/20">
+            <div class="flex items-center justify-between px-3 py-2.5 hover:bg-white/5 rounded-xl cursor-pointer group transition-all duration-200">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-sm bg-purple-600 text-white flex items-center justify-center font-semibold text-xs">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 via-green-500 to-cyan-600 text-white flex items-center justify-center font-bold text-xs shadow-lg shadow-emerald-500/30">
                         {{ request.user.username|first|upper }}
                     </div>
-                    <div class="font-medium text-sm text-gray-200">{{ request.user.username }}</div>
+                    <div class="font-semibold text-xs text-gray-200">{{ request.user.username }}</div>
                 </div>
-                <form method="post" action="{% url 'logout' %}">
+                <form method="post" action="{% url 'logout' %}" class="inline">
                     {% csrf_token %}
-                    <button type="submit" class="text-gray-500 hover:text-white transition" title="Logout">
-                        <i class="fas fa-arrow-right-from-bracket"></i>
+                    <button type="submit" class="text-gray-500 hover:text-red-400 transition-colors duration-200 p-2 hover:bg-red-500/10 rounded-lg text-xs" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
                     </button>
                 </form>
             </div>
@@ -441,20 +450,23 @@
     </div>
 
     <!-- Main Chat Area -->
-    <div class="flex-1 flex flex-col h-full relative bg-[#212121]">
+    <div class="flex-1 flex flex-col h-full relative bg-gradient-to-br from-[#0d1621] to-[#05080f]">
         
-        <div class="h-14 flex items-center justify-between px-4 z-10 sticky top-0 bg-[#212121]/95 backdrop-blur border-b border-white/5">
+        <div class="h-14 flex items-center justify-between px-4 z-10 sticky top-0 bg-black/40 backdrop-blur-xl border-b border-white/5 shadow-lg">
             <div class="flex items-center gap-3 overflow-hidden flex-1">
-                <button class="md:hidden text-gray-400 hover:text-white" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i>
+                <button class="md:hidden text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-lg" onclick="toggleSidebar()">
+                    <i class="fas fa-bars text-lg"></i>
                 </button>
                 {% include 'chat/partials/chat_title.html' with session=current_session %}
             </div>
-            <div class="flex items-center gap-4 text-sm text-gray-400">
+            <div class="flex items-center gap-3 text-sm text-gray-400">
+                <button data-theme-toggle class="p-2 hover:bg-white/5 rounded-lg transition-colors" aria-label="Toggle theme">
+                    <i class="fas fa-sun text-gray-400"></i>
+                </button>
                 {% if request.user.is_superuser %}
-                <a href="{% url 'dashboard' %}" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-900/20 text-red-400 hover:bg-red-900/40 transition font-medium text-xs">
-                    <i class="fas fa-shield-halved"></i>
-                    <span>Nexus Core</span>
+                <a href="{% url 'dashboard' %}" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-red-500/15 to-orange-500/10 border border-red-500/25 text-red-400 hover:from-red-500/25 hover:to-orange-500/20 hover:border-red-500/40 transition-all duration-300 font-semibold text-xs shadow-lg hover:shadow-red-500/20">
+                    <i class="fas fa-shield-halved text-xs"></i>
+                    <span>Admin</span>
                 </a>
                 {% endif %}
             </div>
@@ -464,33 +476,33 @@
             
             {% if not messages %}
                 <div id="empty-state" class="flex flex-col items-center justify-center h-full text-center opacity-0 animate-[fadeIn_0.5s_ease-out_forwards]">
-                    <div class="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-4">
-                        <i class="fas fa-robot text-2xl text-white"></i>
+                    <div class="w-16 h-16 bg-gradient-to-br from-emerald-500/20 to-green-600/20 rounded-2xl flex items-center justify-center mb-6 shadow-2xl shadow-emerald-500/20">
+                        <i class="fas fa-robot text-3xl bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent"></i>
                     </div>
-                    <h2 class="text-xl font-medium text-white mb-2">Nexus</h2>
-                    <p class="text-gray-500 text-sm">Ready to assist.</p>
+                    <h2 class="text-2xl font-bold text-white mb-3">Welcome to Nexus</h2>
+                    <p class="text-gray-500 text-sm max-w-xs">Start a conversation, ask questions, or upload documents for intelligent analysis.</p>
                 </div>
             {% else %}
                 {% for msg in messages %}
                     <div class="max-w-3xl mx-auto w-full group animate-[fadeIn_0.3s_ease-out_forwards]">
                         {% if msg.role == 'user' %}
                             <div class="flex justify-end mb-6">
-                                <div class="max-w-[85%] bg-[#2F2F2F] text-gray-100 px-5 py-3.5 rounded-2xl rounded-tr-md shadow-sm border border-white/5">
-                                    <div class="whitespace-pre-wrap text-[15px] leading-relaxed">{{ msg.content }}</div>
+                                <div class="max-w-[85%] bg-gradient-to-br from-emerald-600/80 to-green-600/70 text-white px-5 py-3.5 rounded-2xl rounded-tr-lg shadow-xl shadow-emerald-500/20 border border-emerald-500/40">
+                                    <div class="whitespace-pre-wrap text-[15px] leading-relaxed font-medium">{{ msg.content }}</div>
                                 </div>
                             </div>
                         {% else %}
                             <div class="flex gap-4 mb-8 animate-[fadeIn_0.3s_ease-out_forwards]">
-                                <div class="w-8 h-8 rounded-full bg-green-600/90 flex-shrink-0 flex items-center justify-center text-white text-xs flex-none">
-                                    <i class="fas fa-bolt text-sm"></i>
+                                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 via-green-500 to-cyan-600 flex-shrink-0 flex items-center justify-center text-white text-xs flex-none shadow-lg shadow-emerald-500/30">
+                                    <i class="fas fa-zap text-sm"></i>
                                 </div>
                                 <div class="flex-1 min-w-0 pt-0.5">
                                     <div class="flex items-center gap-2">
-                                        <div class="font-semibold text-sm text-green-400 mb-2">Nexus</div>
+                                        <div class="font-bold text-sm text-emerald-400 mb-2">Nexus</div>
                                         {% if msg.model_used %}
                                         <div class="relative model-info-container group/model">
                                             <i class="fas fa-circle-info text-xs text-gray-500 hover:text-gray-400 cursor-help transition mb-2"></i>
-                                            <div class="absolute left-0 bottom-full mb-2 hidden group-hover/model:block bg-[#1a1a1a] text-gray-300 text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap border border-white/10 z-50">
+                                            <div class="absolute left-0 bottom-full mb-2 hidden group-hover/model:block bg-black/60 text-gray-300 text-xs px-2.5 py-1.5 rounded-lg shadow-lg whitespace-nowrap border border-white/10 z-50 backdrop-blur-sm">
                                                 {{ msg.model_used }}
                                             </div>
                                         </div>
@@ -507,8 +519,8 @@
             {% endif %}
 
             <div id="loading-spinner" class="htmx-indicator max-w-3xl mx-auto w-full flex gap-4 mt-2 mb-2">
-                <div class="w-8 h-8 rounded-full bg-green-600/90 flex-shrink-0 flex items-center justify-center text-white text-xs flex-none">
-                    <i class="fas fa-bolt text-sm"></i>
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex-shrink-0 flex items-center justify-center text-white text-xs flex-none shadow-lg shadow-green-500/30">
+                    <i class="fas fa-bolt text-base"></i>
                 </div>
                 <div class="flex items-center text-gray-400 text-sm pt-1">
                     <div class="loading-dots">
@@ -516,16 +528,16 @@
                         <div class="loading-dot"></div>
                         <div class="loading-dot"></div>
                     </div>
-                    <span class="ml-2">Processing...</span>
+                    <span class="ml-2 font-medium">Thinking...</span>
                 </div>
             </div>
         </div>
 
-        <div class="fixed bottom-0 right-0 lg:right-[280px] bg-gradient-to-t from-[#212121] via-[#212121]/95 to-transparent pt-10 pb-6 px-4 z-20" style="left: 260px;">
+        <div class="fixed bottom-0 right-0 lg:right-[280px] bg-gradient-to-t from-[#0d1621] via-[#0d1621]/95 to-transparent pt-10 pb-6 px-4 z-20" style="left: 260px;">
             <div class="max-w-3xl mx-auto w-full">
 
                 <!-- Service unavailable message -->
-                <div id="service-unavailable-message" class="hidden mb-4 p-4 bg-red-900/20 border border-red-900/40 rounded-lg text-red-400 text-sm text-center">
+                <div id="service-unavailable-message" class="hidden mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">
                     <i class="fas fa-exclamation-triangle mr-2"></i>
                     <span>Service temporarily unavailable. All model rate limits reached. Please try again later.</span>
                 </div>
@@ -537,27 +549,27 @@
                       id="chat-form"
                       hx-on::before-request="handleBeforeSend()"
                       hx-on::after-request="handleAfterRequest(event)"
-                      class="relative bg-gradient-to-br from-white/8 to-white/5 rounded-2xl shadow-lg shadow-black/20 border border-white/15 focus-within:border-cyan-400/50 focus-within:shadow-lg focus-within:shadow-cyan-500/10 transition-all duration-300 hover:border-white/25">
+                      class="relative bg-gradient-to-br from-white/8 to-white/3 rounded-2xl shadow-2xl shadow-black/40 border border-white/10 focus-within:border-emerald-400/50 focus-within:shadow-2xl focus-within:shadow-emerald-500/25 transition-all duration-300 hover:border-white/20">
                     
                     {% csrf_token %}
                     
-                    <div class="flex items-end p-3 gap-3">
+                    <div class="flex items-end p-3.5 gap-3">
                         <textarea name="message" rows="1" 
                                   id="chat-input-textarea"
-                                  class="flex-1 bg-white/[0.03] border-0 focus:outline-none focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-3 px-4 text-[15px] leading-relaxed rounded-xl transition-all duration-200" 
+                                  class="flex-1 bg-white/[0.02] border-0 focus:outline-none focus:ring-0 text-gray-100 placeholder-gray-500 resize-none py-3 px-4 text-[15px] leading-relaxed rounded-xl transition-all duration-200" 
                                   placeholder="Message Nexus..." required
                                   oninput="adjustChatHeight(this)"
                                   onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); if(!document.getElementById('chat-submit-btn').disabled) { this.form.requestSubmit(); } }"></textarea>
 
-                        <button type="submit" id="chat-submit-btn" class="w-11 h-11 flex items-center justify-center flex-shrink-0 send-btn text-white rounded-xl transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-br from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 active:scale-95">
+                        <button type="submit" id="chat-submit-btn" class="w-10 h-10 flex items-center justify-center flex-shrink-0 send-btn text-white rounded-xl transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-br from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 active:scale-95">
                             <span class="sr-only">Send</span>
-                            <i class="fas fa-arrow-up text-base translate-y-[1px]"></i>
+                            <i class="fas fa-arrow-up text-sm font-bold"></i>
                         </button>
                     </div>
                 </form>
                 
                 <div class="text-center mt-3">
-                    <p class="text-xs text-gray-600">Nexus can make mistakes. Check important info.</p>
+                    <p class="text-xs text-gray-600 font-medium">Nexus can make mistakes. Always verify important information.</p>
                 </div>
             </div>
         </div>
@@ -869,4 +881,6 @@
         }
     });
 </script>
+<script src="/static/js/theme.js"></script>
+</body>
 </html>

@@ -143,7 +143,10 @@ def chat_view(request, session_id=None):
         
         # Validate input
         if not user_message:
-            return HttpResponse("Message cannot be empty", status=400)
+            return render(request, 'chat/partials/system_message.html', {
+                'content': "Message cannot be empty",
+                'error': True
+            })
         
         if len(user_message) > 5000:
             return render(request, 'chat/partials/system_message.html', {
@@ -339,7 +342,6 @@ def delete_user(request, user_id):
         user.delete() # This cascades and deletes their chats/files too
         return render(request, 'chat/partials/empty.html') # Return nothing (removes element)
 
-@staff_member_required
 @staff_member_required
 def delete_chat_session(request, session_id):
     if request.method == "POST":

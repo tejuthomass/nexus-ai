@@ -48,9 +48,11 @@ def ingest_document(file_identifier, text_content):
         google_client, index = get_clients()
         
         # Split text into chunks with overlap to prevent context fragmentation
-        # Use 2000 chars per chunk with 200-char overlap for semantic continuity
-        chunk_size = 2000
-        chunk_overlap = 200
+        # OPTIMIZED: Reduced chunk size from 2000 to 800 characters for better precision
+        # Smaller chunks improve answer accuracy for specific questions by reducing context dilution
+        # Overlap of 100 chars maintains semantic continuity between chunks
+        chunk_size = 800
+        chunk_overlap = 100
         chunks = []
         for i in range(0, len(text_content), chunk_size - chunk_overlap):
             chunk = text_content[i:i+chunk_size]
@@ -138,9 +140,11 @@ def retrieve_context(query, session_id=None):
         if session_id:
             filter_dict = {"session_id": {"$eq": str(session_id)}}
 
+        # Retrieve more chunks with optimized chunk size for better context coverage
+        # Increased from top_k=3 to top_k=5 to compensate for smaller chunk sizes
         search_results = index.query(
             vector=query_embedding,
-            top_k=3,
+            top_k=5,
             include_metadata=True,
             filter=filter_dict # <--- Apply the filter here
         )
@@ -155,23 +159,81 @@ def retrieve_context(query, session_id=None):
         logger.error(f"Context retrieval failed: {e}")
         return ""  # Return empty string instead of crashing
 
-# 5. Delete Vectors (The Cleaner)
-def delete_session_vectors(session_id):
-    try:
-        google_client, index = get_clients()
-        # Delete all vectors where metadata['session_id'] matches
-        index.delete(filter={"session_id": {"$eq": str(session_id)}})
-        logger.info(f"🧹 Cleaned vectors for session {session_id}")
-    except Exception as e:
-        logger.error(f"Error cleaning vectors for session {session_id}: {e}")
+# 5. Delete Vectors (The Cleaner) - Enhanced with retry logic
+def delete_session_vectors(session_id, max_retries=3):
+    """
+    Delete all vectors for a session with retry logic for reliability.
+    Ensures orphaned vectors don't accumulate even when API calls fail.
+    
+    Args:
+        session_id: ID of the session to clean
+        max_retries: Number of retry attempts (default: 3)
+    
+    Returns:
+        bool: True if deletion succeeded, False otherwise
+    """
+    import time
+    
+    for attempt in range(max_retries):
+        try:
+            google_client, index = get_clients()
+            # Delete all vectors where metadata['session_id'] matches
+            index.delete(filter={"session_id": {"$eq": str(session_id)}})
+            logger.info(f"🧹 Successfully cleaned vectors for session {session_id} (attempt {attempt + 1})")
+            return True
+        except Exception as e:
+            logger.error(f"Attempt {attempt + 1}/{max_retries} - Error cleaning vectors for session {session_id}: {e}")
+            
+            # If this isn't the last retry, wait before trying again
+            if attempt < max_retries - 1:
+                wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
+                logger.info(f"Retrying vector cleanup in {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                # Final attempt failed - log critical error for manual cleanup
+                logger.critical(
+                    f"⚠️ CRITICAL: Failed to delete vectors for session {session_id} after {max_retries} attempts. "
+                    f"Manual cleanup required to prevent orphaned vectors. Error: {e}"
+                )
+                return False
+    
+    return False
 
-# 6. Delete Vectors for Specific Document (For Failed Uploads)
-def delete_document_vectors(file_identifier):
-    """Delete vectors for a specific document by file_identifier"""
-    try:
-        google_client, index = get_clients()
-        # Delete all vectors where source matches the file_identifier
-        index.delete(filter={"source": {"$eq": file_identifier}})
-        logger.info(f"🧹 Cleaned vectors for document {file_identifier}")
-    except Exception as e:
-        logger.error(f"Error cleaning vectors for document {file_identifier}: {e}")
+# 6. Delete Vectors for Specific Document (For Failed Uploads) - Enhanced with retry logic
+def delete_document_vectors(file_identifier, max_retries=3):
+    """
+    Delete vectors for a specific document with retry logic.
+    
+    Args:
+        file_identifier: Identifier of the document to clean
+        max_retries: Number of retry attempts (default: 3)
+    
+    Returns:
+        bool: True if deletion succeeded, False otherwise
+    """
+    import time
+    
+    for attempt in range(max_retries):
+        try:
+            google_client, index = get_clients()
+            # Delete all vectors where source matches the file_identifier
+            index.delete(filter={"source": {"$eq": file_identifier}})
+            logger.info(f"🧹 Successfully cleaned vectors for document {file_identifier} (attempt {attempt + 1})")
+            return True
+        except Exception as e:
+            logger.error(f"Attempt {attempt + 1}/{max_retries} - Error cleaning vectors for document {file_identifier}: {e}")
+            
+            # If this isn't the last retry, wait before trying again
+            if attempt < max_retries - 1:
+                wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
+                logger.info(f"Retrying document vector cleanup in {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                # Final attempt failed - log critical error
+                logger.critical(
+                    f"⚠️ CRITICAL: Failed to delete vectors for document {file_identifier} after {max_retries} attempts. "
+                    f"Manual cleanup required. Error: {e}"
+                )
+                return False
+    
+    return False

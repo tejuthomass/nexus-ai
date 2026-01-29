@@ -3,114 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Page Not Found | Nexus Core</title>
+    <title>404 - Page Not Found | Nexus</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
         body { 
             font-family: 'Inter', sans-serif; 
-            background: linear-gradient(to bottom, #0f0f0f, #171717);
+            background: linear-gradient(135deg, #05080f 0%, #0d1621 50%, #050a12 100%);
             min-height: 100vh;
         }
         
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #424242; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #616161; }
+        ::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #f87171; }
         
         /* Floating Animation */
         @keyframes float {
             0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
+            50% { transform: translateY(-25px); }
         }
         
         .animate-float {
-            animation: float 3s ease-in-out infinite;
+            animation: float 3.5s ease-in-out infinite;
         }
         
-        /* Pulse Animation */
+        /* Pulse Glow */
         @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
-            50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.6); }
+            0%, 100% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.4), 0 0 60px rgba(239, 68, 68, 0.2); }
+            50% { box-shadow: 0 0 50px rgba(239, 68, 68, 0.6), 0 0 80px rgba(239, 68, 68, 0.3); }
         }
         
         .animate-pulse-glow {
-            animation: pulse-glow 2s ease-in-out infinite;
+            animation: pulse-glow 2.5s ease-in-out infinite;
+        }
+        
+        /* Fade in */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.8s ease-out;
         }
     </style>
 </head>
 <body class="text-gray-100">
     
     <div class="flex items-center justify-center min-h-screen px-4">
-        <div class="text-center">
+        <div class="text-center animate-fade-in">
             <!-- Animated Error Icon -->
             <div class="mb-8 flex justify-center">
                 <div class="animate-pulse-glow">
-                    <div class="w-24 h-24 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center shadow-lg">
-                        <i class="fas fa-circle-exclamation text-5xl text-white animate-float"></i>
+                    <div class="w-24 h-24 bg-gradient-to-br from-red-500 to-orange-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-red-500/40">
+                        <i class="fas fa-triangle-exclamation text-5xl text-white animate-float"></i>
                     </div>
                 </div>
             </div>
             
             <!-- Error Code -->
-            <h1 class="text-9xl font-black bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-red-600 mb-4">
+            <h1 class="text-9xl font-black bg-gradient-to-r from-red-500 to-orange-600 bg-clip-text text-transparent mb-4">
                 404
             </h1>
             
             <!-- Error Title -->
-            <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">
-                Lost in the Digital Void
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">
+                Page Not Found
             </h2>
             
             <!-- Error Description -->
-            <p class="text-xl text-gray-300 mb-8 max-w-md mx-auto leading-relaxed">
-                The page you're looking for doesn't exist or has been moved. 
-                <span class="block mt-2 text-base text-gray-400">It's like searching for a conversation in an empty chat room! 🤖</span>
+            <p class="text-lg text-gray-300 mb-10 max-w-xl mx-auto leading-relaxed">
+                The page you're looking for doesn't exist. It might have been moved, deleted, or the URL might be incorrect.
             </p>
             
             <!-- Error Details -->
-            <div class="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-8 max-w-md mx-auto text-left">
-                <div class="flex items-center gap-3 mb-3">
-                    <i class="fas fa-info-circle text-yellow-500"></i>
-                    <span class="text-sm font-semibold text-gray-300">What happened?</span>
+            <div class="bg-white/5 border border-white/10 rounded-2xl p-6 mb-10 max-w-md mx-auto text-left backdrop-blur-sm">
+                <div class="flex items-center gap-3 mb-4">
+                    <i class="fas fa-info-circle text-yellow-400 text-lg"></i>
+                    <span class="text-sm font-bold text-gray-300 uppercase tracking-wider">What Happened?</span>
                 </div>
-                <ul class="text-sm text-gray-400 space-y-2">
-                    <li class="flex items-start gap-2">
-                        <span class="text-red-400 font-bold">→</span>
-                        <span>The URL you entered might be incorrect or outdated</span>
+                <ul class="text-sm text-gray-400 space-y-3">
+                    <li class="flex items-start gap-3">
+                        <span class="text-red-400 font-bold mt-0.5">→</span>
+                        <span>The URL might be incorrect or outdated</span>
                     </li>
-                    <li class="flex items-start gap-2">
-                        <span class="text-red-400 font-bold">→</span>
-                        <span>The resource may have been deleted or moved</span>
+                    <li class="flex items-start gap-3">
+                        <span class="text-red-400 font-bold mt-0.5">→</span>
+                        <span>The resource may have been removed</span>
                     </li>
-                    <li class="flex items-start gap-2">
-                        <span class="text-red-400 font-bold">→</span>
-                        <span>You might not have permission to access this page</span>
+                    <li class="flex items-start gap-3">
+                        <span class="text-red-400 font-bold mt-0.5">→</span>
+                        <span>You might lack permission to access this page</span>
                     </li>
                 </ul>
             </div>
             
             <!-- Action Buttons -->
-            <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-                <a href="/" class="px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-red-500/20 flex items-center justify-center gap-2">
-                    <i class="fas fa-home"></i>
-                    Back to Home
+            <div class="flex flex-col sm:flex-row gap-4 justify-center mb-10">
+                <a href="/" class="px-8 py-3.5 bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white font-bold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-2xl shadow-red-500/30 hover:shadow-red-500/50 flex items-center justify-center gap-2">
+                    <i class="fas fa-home text-lg"></i>
+                    <span>Back Home</span>
                 </a>
-                <button onclick="history.back()" class="px-8 py-3 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 border border-gray-700 flex items-center justify-center gap-2">
-                    <i class="fas fa-arrow-left"></i>
-                    Go Back
+                <button onclick="history.back()" class="px-8 py-3.5 bg-white/8 hover:bg-white/12 border border-white/15 hover:border-white/25 text-white font-bold rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 backdrop-blur-sm">
+                    <i class="fas fa-arrow-left text-lg"></i>
+                    <span>Go Back</span>
                 </button>
             </div>
             
             <!-- Fun Message -->
-            <div class="text-center text-sm text-gray-500">
-                <p class="mb-2">🎯 Pro tip: Did you accidentally modify the chat ID in the URL?</p>
-                <p>Invalid URLs always end up here. Make sure you're visiting valid routes! 🚀</p>
-            </div>
-        </div>
-    </div>
-    
-</body>
+            <div class="text-center text-sm text-gray-500 max-w-md">
+                <p class="mb-2 font-medium">💡 Lost your way?</p>
+                <p>Double-check the URL and try navigating from the home page. If the issue persists, contact support.</p>
 </html>

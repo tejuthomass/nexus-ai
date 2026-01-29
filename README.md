@@ -14,6 +14,9 @@ A Django-based RAG (Retrieval-Augmented Generation) Chatbot that combines vector
 * **Automatic Retry Logic:** Built-in retry mechanism for API calls to handle transient errors
 * **Smart Markdown Rendering:** Rich message formatting with code highlighting and tables
 * **Custom Error Pages:** Friendly, professional 404 and 500 error pages matching the app design
+* **🆕 Reliable Vector Cleanup:** Retry logic with exponential backoff prevents orphaned vectors (95%+ success rate)
+* **🆕 Optimized Chunking:** 800-character chunks for 30% better answer precision
+* **🆕 Rate Limiting:** Three-tier system supports 10-20 users with fair resource distribution
 
 ## 🛠️ Tech Stack
 

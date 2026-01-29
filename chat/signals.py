@@ -7,7 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# 1. Trigger when a SESSION is deleted - handles cascade cleanup
+# 1. Trigger when a SESSION is deleted - handles cascade cleanup with retry logic
 @receiver(pre_delete, sender=ChatSession)
 def cleanup_session_data(sender, instance, **kwargs):
     logger.info(f"🗑️ Preparing to delete session '{instance.title}' (ID: {instance.id})")
@@ -22,13 +22,22 @@ def cleanup_session_data(sender, instance, **kwargs):
         for doc in documents:
             doc.delete()
     
-    # Clean Pinecone Vectors
-    try:
-        delete_session_vectors(instance.id)
-    except Exception as e:
-        logger.error(f"Error deleting session vectors: {e}")
+    # Clean Pinecone Vectors with retry logic
+    cleanup_success = delete_session_vectors(instance.id)
     
-    logger.info(f"✅ Session {instance.id} cleanup completed")
+    if not cleanup_success:
+        # Vector cleanup failed - create an orphaned vectors tracking log
+        # This allows admins to manually clean up later or implement a cleanup job
+        logger.critical(
+            f"⚠️ SESSION DELETED BUT VECTORS MAY BE ORPHANED: "
+            f"Session ID: {instance.id}, Title: '{instance.title}', User: {instance.user.username}. "
+            f"RECOMMEND: Manual Pinecone cleanup with filter session_id={instance.id}"
+        )
+        # Note: We don't raise an exception here to prevent blocking the session deletion
+        # The session will be deleted, but vectors may remain (orphaned)
+        # This is better than preventing deletion entirely
+    
+    logger.info(f"✅ Session {instance.id} cleanup completed (vectors {'cleaned' if cleanup_success else 'MAY BE ORPHANED'})")
 
 # 2. Trigger when a DOCUMENT is deleted
 @receiver(post_delete, sender=Document)

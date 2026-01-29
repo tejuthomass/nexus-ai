@@ -17,7 +17,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-(5=%ss($ev6jh!b(=4getbfe+tljwq%4dq^co9d%62n^16n#ut')
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # NOTE: Custom 404 and 500 error pages are only shown when DEBUG=False
@@ -49,6 +49,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'chat.middleware.RateLimitMiddleware',  # Rate limiting for all requests
+    'chat.middleware.APIRateLimitMiddleware',  # Additional rate limiting for AI API calls
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -63,6 +65,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'config.context_processors.admin_url',  # Add admin URL to context
             ],
         },
     },
@@ -84,7 +87,7 @@ DATABASES = {
         'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
         'CONN_MAX_AGE': 600,
         'DISABLE_SERVER_SIDE_CURSORS': True,
-        'CONN_HEALTH_CHECKS': True,
+        'CONN_HEALTH_CHECKS': False,  # DISABLED for Neon free tier to prevent excessive database queries during idle periods, allowing auto-suspend to work properly
     }
 }
 
@@ -123,8 +126,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
 
 # Media files
 MEDIA_URL = '/media/'
@@ -165,7 +171,7 @@ STORAGES = {
 }
 
 # --- AUTH REDIRECTS ---
-LOGIN_REDIRECT_URL = '/'  # Go to homepage (Chat) after login
+LOGIN_REDIRECT_URL = '/chat/'  # Go to chat page after login
 LOGOUT_REDIRECT_URL = '/accounts/login/' # Go to login page after logout
 
 # --- LOGGING CONFIGURATION ---
@@ -210,3 +216,40 @@ LOGGING = {
 # --- FILE UPLOAD SETTINGS ---
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+
+# --- CACHE CONFIGURATION (Required for Rate Limiting) ---
+# Production (Render): Use DatabaseCache for multi-worker support (persists across dyno sleep)
+# Redis: If Redis is available, use it instead
+REDIS_URL = os.getenv('REDIS_URL', None)
+
+if REDIS_URL:
+    # PRODUCTION with Redis: Redis cache for multi-worker rate limiting
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': REDIS_URL,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'CONNECTION_POOL_KWARGS': {
+                    'max_connections': 50,
+                    'retry_on_timeout': True,
+                },
+                'SOCKET_CONNECT_TIMEOUT': 5,
+                'SOCKET_TIMEOUT': 5,
+            },
+            'KEY_PREFIX': 'nexus',
+            'TIMEOUT': 300,
+        }
+    }
+else:
+    # PRODUCTION (Render free tier): Use DatabaseCache (shared across 4 workers, persists on sleep)
+    # Accurate rate limits across all workers + persistent quotas even after dyno sleep
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+            'LOCATION': 'django_cache_table',
+            'OPTIONS': {
+                'MAX_ENTRIES': 10000,
+            }
+        }
+    }
