@@ -94,7 +94,7 @@ def chat_view(request, session_id=None):
             unique_public_id = f"session_{current_session.id}_{uploaded_file.name}"
             upload_result = cloudinary.uploader.upload(
                 io.BytesIO(file_content), 
-                resource_type="raw", 
+                resource_type="auto", 
                 public_id=unique_public_id
             )
 
