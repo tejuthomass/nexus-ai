@@ -1,18 +1,18 @@
 <!-- Admin Chat Modal Overlay -->
 <div id="admin-chat-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fadeIn" onclick="if(event.target === this) document.getElementById('admin-chat-modal').classList.add('hidden')">
-    <div class="bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col border border-white/20 overflow-hidden" onclick="event.stopPropagation()">
+    <div class="bg-gradient-to-br from-[#1a1a24] to-[#0a0a0f] rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col border border-white/20 overflow-hidden" onclick="event.stopPropagation()">
         <!-- Modal Header -->
-        <div class="flex items-center justify-between p-6 border-b border-white/20 bg-gradient-to-r from-green-500/10 to-blue-500/10">
+        <div class="flex items-center justify-between p-6 border-b border-white/20 bg-gradient-to-r from-indigo-500/10 to-violet-500/10">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-blue-600 flex items-center justify-center shadow-xl shadow-green-500/30">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-xl shadow-indigo-500/30">
                     <i class="fas fa-comments text-white text-xl"></i>
                 </div>
                 <div>
                     <h2 class="text-xl font-bold text-white" id="admin-modal-title">Chat History</h2>
-                    <p class="text-xs text-gray-400 mt-1 font-medium" id="admin-modal-user">User: —</p>
+                    <p class="text-xs text-zinc-400 mt-1 font-medium" id="admin-modal-user">User: —</p>
                 </div>
             </div>
-            <button type="button" onclick="document.getElementById('admin-chat-modal').classList.add('hidden')" class="text-gray-400 hover:text-white transition-colors p-3 hover:bg-white/10 rounded-xl">
+            <button type="button" onclick="document.getElementById('admin-chat-modal').classList.add('hidden')" class="text-zinc-400 hover:text-white transition-colors p-3 hover:bg-white/10 rounded-xl">
                 <i class="fas fa-times text-2xl"></i>
             </button>
         </div>
@@ -20,22 +20,22 @@
         <!-- Modal Content -->
         <div class="flex flex-1 gap-4 overflow-hidden">
             <!-- Chat Messages Area -->
-            <div class="flex-1 overflow-y-auto p-5 space-y-4 bg-[#212121]">
+            <div class="flex-1 overflow-y-auto p-5 space-y-4 bg-[#12121a]">
                 <div id="admin-modal-messages">
                     <div class="flex justify-center items-center h-full">
                         <div class="text-center space-y-2">
-                            <i class="fas fa-circle-notch fa-spin text-2xl text-gray-500"></i>
-                            <p class="text-gray-500 text-sm">Loading conversation...</p>
+                            <i class="fas fa-circle-notch fa-spin text-2xl text-zinc-500"></i>
+                            <p class="text-zinc-500 text-sm">Loading conversation...</p>
                         </div>
                     </div>
                 </div>
             </div>
             
             <!-- Attachments Sidebar in Modal -->
-            <div class="w-[280px] bg-[#1a1a1a] border-l border-white/10 flex flex-col">
+            <div class="w-[280px] bg-[#1a1a24] border-l border-white/10 flex flex-col">
                 <div class="p-4 border-b border-white/10">
-                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                        <i class="fas fa-paperclip"></i>
+                    <h3 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fas fa-paperclip text-indigo-400"></i>
                         Attachments
                     </h3>
                 </div>
@@ -43,8 +43,8 @@
                     <div id="admin-modal-attachments">
                         <div class="flex items-center justify-center h-full text-center py-12">
                             <div class="space-y-2">
-                                <i class="fas fa-inbox text-3xl text-gray-600"></i>
-                                <p class="text-xs text-gray-500">No attachments</p>
+                                <i class="fas fa-inbox text-3xl text-zinc-600"></i>
+                                <p class="text-xs text-zinc-500">No attachments</p>
                             </div>
                         </div>
                     </div>
@@ -53,12 +53,12 @@
         </div>
         
         <!-- Modal Footer -->
-        <div class="p-4 border-t border-white/10 bg-[#1a1a1a] flex items-center justify-between">
-            <div class="text-xs text-gray-500">
+        <div class="p-4 border-t border-white/10 bg-[#1a1a24] flex items-center justify-between">
+            <div class="text-xs text-zinc-500">
                 <i class="fas fa-info-circle mr-1"></i>
                 Read-only view
             </div>
-            <button type="button" onclick="document.getElementById('admin-chat-modal').classList.add('hidden')" class="px-5 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg font-medium transition flex items-center gap-2">
+            <button type="button" onclick="document.getElementById('admin-chat-modal').classList.add('hidden')" class="px-5 py-2.5 bg-white/10 hover:bg-white/15 text-zinc-300 rounded-lg font-medium transition flex items-center gap-2">
                 <i class="fas fa-times"></i>
                 Close
             </button>
@@ -79,14 +79,14 @@ function openAdminChatModal(sessionId) {
     messagesContainer.innerHTML = `
         <div class="flex justify-center items-center h-full">
             <div class="text-center space-y-2">
-                <i class="fas fa-circle-notch fa-spin text-2xl text-gray-500"></i>
-                <p class="text-gray-500 text-sm">Loading conversation...</p>
+                <i class="fas fa-circle-notch fa-spin text-2xl text-zinc-500"></i>
+                <p class="text-zinc-500 text-sm">Loading conversation...</p>
             </div>
         </div>
     `;
     
     // Fetch the admin chat data
-    fetch(`/api/admin-chat/${sessionId}/`)
+    fetch(`/chat/api/admin-chat/${sessionId}/`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Failed to load chat');
@@ -104,9 +104,9 @@ function openAdminChatModal(sessionId) {
                     if (msg.role === 'user') {
                         return `
                             <div class="flex justify-end animate-[fadeIn_0.3s_ease-out_forwards]">
-                                <div class="max-w-[85%] bg-[#2F2F2F] text-gray-100 px-5 py-3.5 rounded-2xl rounded-tr-md shadow-sm border border-white/5">
+                                <div class="max-w-[85%] bg-gradient-to-br from-indigo-600/80 to-violet-600/70 text-white px-5 py-3.5 rounded-2xl rounded-tr-lg shadow-xl shadow-indigo-500/20 border border-indigo-500/40">
                                     <div class="text-[15px] leading-relaxed whitespace-pre-wrap">${escapeHtml(msg.content)}</div>
-                                    <div class="text-xs text-gray-500 mt-2">${formatDate(msg.created_at)}</div>
+                                    <div class="text-xs text-indigo-200/70 mt-2">${formatDate(msg.created_at)}</div>
                                 </div>
                             </div>
                         `;
@@ -114,41 +114,41 @@ function openAdminChatModal(sessionId) {
                     const html = msg.html_content || escapeHtml(msg.content || '');
                     return `
                         <div class="flex gap-4 animate-[fadeIn_0.3s_ease-out_forwards]">
-                            <div class="w-8 h-8 rounded-full bg-green-600/90 flex-shrink-0 flex items-center justify-center text-white text-xs mt-1">
-                                <i class="fas fa-bolt"></i>
+                            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 flex-shrink-0 flex items-center justify-center text-white text-xs mt-1 shadow-lg shadow-indigo-500/30">
+                                <i class="fas fa-zap"></i>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <div class="font-semibold text-sm text-green-400 mb-2">Nexus</div>
-                                <div class="prose prose-invert max-w-none text-gray-200 text-[15px] leading-relaxed">
+                                <div class="font-semibold text-sm text-indigo-400 mb-2">Nexus</div>
+                                <div class="prose prose-invert max-w-none text-zinc-200 text-[15px] leading-relaxed">
                                     ${html}
                                 </div>
-                                <div class="text-xs text-gray-600 mt-2">${formatDate(msg.created_at)}</div>
+                                <div class="text-xs text-zinc-600 mt-2">${formatDate(msg.created_at)}</div>
                             </div>
                         </div>
                     `;
                 }).join('');
             } else {
-                messagesContainer.innerHTML = '<p class="text-gray-500 text-sm text-center py-8">No messages in this conversation.</p>';
+                messagesContainer.innerHTML = '<p class="text-zinc-500 text-sm text-center py-8">No messages in this conversation.</p>';
             }
             
             // Populate attachments with improved styling
             if (data.documents && data.documents.length > 0) {
                 attachmentsContainer.innerHTML = data.documents.map(doc => `
-                    <a href="${doc.file_url}" target="_blank" class="flex items-center gap-3 p-3 rounded-lg bg-[#2F2F2F] border border-white/5 hover:border-red-500/30 hover:bg-[#3a3a3a] transition group">
-                        <i class="fas fa-file-pdf text-red-400 text-lg flex-shrink-0"></i>
+                    <a href="${doc.file_url}" target="_blank" class="flex items-center gap-3 p-3 rounded-lg bg-white/[0.04] border border-white/8 hover:border-indigo-500/40 hover:bg-indigo-500/8 transition group">
+                        <i class="fas fa-file-pdf text-indigo-400 text-lg flex-shrink-0"></i>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm text-gray-300 truncate group-hover:text-white transition font-medium">${escapeHtml(doc.title)}</p>
-                            <p class="text-xs text-gray-600">${formatDate(doc.uploaded_at)}</p>
+                            <p class="text-sm text-zinc-300 truncate group-hover:text-white transition font-medium">${escapeHtml(doc.title)}</p>
+                            <p class="text-xs text-zinc-600">${formatDate(doc.uploaded_at)}</p>
                         </div>
-                        <i class="fas fa-download text-gray-600 group-hover:text-gray-300 transition opacity-0 group-hover:opacity-100"></i>
+                        <i class="fas fa-download text-zinc-600 group-hover:text-indigo-400 transition opacity-0 group-hover:opacity-100"></i>
                     </a>
                 `).join('');
             } else {
                 attachmentsContainer.innerHTML = `
                     <div class="flex items-center justify-center h-full text-center py-8">
                         <div class="space-y-2">
-                            <i class="fas fa-inbox text-3xl text-gray-600"></i>
-                            <p class="text-xs text-gray-500">No attachments</p>
+                            <i class="fas fa-inbox text-3xl text-zinc-600"></i>
+                            <p class="text-xs text-zinc-500">No attachments</p>
                         </div>
                     </div>
                 `;
@@ -160,7 +160,7 @@ function openAdminChatModal(sessionId) {
                 <div class="text-center py-8">
                     <i class="fas fa-exclamation-triangle text-3xl text-red-400 mb-3"></i>
                     <p class="text-red-400 text-sm font-medium">Failed to load chat details</p>
-                    <p class="text-gray-500 text-xs mt-1">${error.message}</p>
+                    <p class="text-zinc-500 text-xs mt-1">${error.message}</p>
                 </div>
             `;
         });

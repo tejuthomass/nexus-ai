@@ -1,8 +1,8 @@
 <!-- Right Sidebar - Attachments Pane -->
-<div class="w-[280px] bg-gradient-to-b from-[#0d1621] to-[#05080f] flex flex-col border-l border-white/5 hidden lg:flex shadow-2xl">
-    <div class="p-4 border-b border-white/5 bg-gradient-to-r from-emerald-500/8 to-cyan-600/8">
-        <h3 class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2">
-            <i class="fas fa-paperclip text-emerald-400"></i>
+<div class="w-[280px] bg-gradient-to-b from-[#12121a] to-[#0a0a0f] flex flex-col border-l border-white/5 hidden lg:flex shadow-2xl">
+    <div class="p-4 border-b border-white/5 bg-gradient-to-r from-indigo-500/8 to-violet-600/8">
+        <h3 class="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+            <i class="fas fa-paperclip text-indigo-400"></i>
             Attachments
         </h3>
     </div>
@@ -20,15 +20,15 @@
             {% csrf_token %}
             
             <!-- Upload Indicator -->
-            <div id="sidebar-upload-indicator" class="mb-2 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl hidden shadow-lg">
+            <div id="sidebar-upload-indicator" class="mb-2 p-3 bg-indigo-500/10 border border-indigo-500/30 rounded-xl hidden shadow-lg">
                 <div class="flex items-center gap-2 text-xs">
-                    <i class="fas fa-circle-notch fa-spin text-emerald-400"></i>
-                    <span class="text-emerald-300 font-medium">Processing PDF...</span>
+                    <i class="fas fa-circle-notch fa-spin text-indigo-400"></i>
+                    <span class="text-indigo-300 font-medium">Processing PDF...</span>
                 </div>
             </div>
             
             <!-- Upload Button -->
-            <label for="sidebar-pdf-upload" class="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl cursor-pointer transition-all duration-300 text-sm font-bold shadow-lg hover:shadow-xl hover:shadow-emerald-500/30 transform hover:scale-[1.02] active:scale-[0.98]">
+            <label for="sidebar-pdf-upload" class="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-xl cursor-pointer transition-all duration-300 text-sm font-bold shadow-lg hover:shadow-xl hover:shadow-indigo-500/30 transform hover:scale-[1.02] active:scale-[0.98]">
                 <i class="fas fa-upload"></i>
                 <span>Upload PDF</span>
             </label>
@@ -40,11 +40,11 @@
                    onchange="validateAndUploadFile(this)">
             
             <!-- File Info -->
-            <div id="file-label" class="text-xs text-gray-500 text-center min-h-[16px] font-medium"></div>
+            <div id="file-label" class="text-xs text-zinc-500 text-center min-h-[16px] font-medium"></div>
             
             <!-- Size Limit Info -->
-            <div class="text-xs text-gray-600 text-center flex items-center justify-center gap-2">
-                <i class="fas fa-info-circle text-emerald-400"></i> 
+            <div class="text-xs text-zinc-600 text-center flex items-center justify-center gap-2">
+                <i class="fas fa-info-circle text-indigo-400"></i> 
                 <span>Max size: 5MB</span>
             </div>
         </form>
@@ -67,10 +67,10 @@ function updateFileLabel(filename) {
     const label = document.getElementById('file-label');
     if (filename) {
         label.textContent = filename.length > 25 ? filename.substring(0, 25) + '...' : filename;
-        label.classList.add('text-green-400');
+        label.classList.add('text-indigo-400');
     } else {
         label.textContent = '';
-        label.classList.remove('text-green-400');
+        label.classList.remove('text-indigo-400');
     }
 }
 

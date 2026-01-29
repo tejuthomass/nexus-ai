@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/theme.css">
     <style>
         * {
             -webkit-font-smoothing: antialiased;
@@ -15,15 +16,9 @@
         
         body { 
             font-family: 'Inter', sans-serif; 
-            background: linear-gradient(135deg, #05080f 0%, #0d1621 50%, #050a12 100%);
+            background: linear-gradient(135deg, #0a0a0f 0%, #12121a 50%, #0a0a0f 100%);
             min-height: 100vh;
         }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #f87171; }
         
         /* Shake Animation */
         @keyframes shake {
@@ -57,21 +52,21 @@
         }
     </style>
 </head>
-<body class="text-gray-100">
+<body class="text-zinc-100">
     
     <div class="flex items-center justify-center min-h-screen px-4">
         <div class="text-center animate-fade-in">
             <!-- Animated Error Icon -->
             <div class="mb-8 flex justify-center">
                 <div class="animate-pulse-glow">
-                    <div class="w-24 h-24 bg-gradient-to-br from-red-500 to-orange-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-red-500/40 animate-shake">
+                    <div class="w-24 h-24 bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-red-500/40 animate-shake">
                         <i class="fas fa-server text-5xl text-white"></i>
                     </div>
                 </div>
             </div>
             
             <!-- Error Code -->
-            <h1 class="text-9xl font-black bg-gradient-to-r from-red-500 to-orange-600 bg-clip-text text-transparent mb-4">
+            <h1 class="text-9xl font-black bg-gradient-to-r from-red-500 to-rose-600 bg-clip-text text-transparent mb-4">
                 500
             </h1>
             
@@ -81,27 +76,27 @@
             </h2>
             
             <!-- Error Description -->
-            <p class="text-lg text-gray-300 mb-10 max-w-xl mx-auto leading-relaxed">
+            <p class="text-lg text-zinc-300 mb-10 max-w-xl mx-auto leading-relaxed">
                 Something went wrong on our end. Our engineering team has been notified and is working to resolve the issue.
             </p>
             
             <!-- Error Details -->
             <div class="bg-white/5 border border-white/10 rounded-2xl p-6 mb-10 max-w-md mx-auto text-left backdrop-blur-sm">
                 <div class="flex items-center gap-3 mb-4">
-                    <i class="fas fa-gears text-orange-400 text-lg"></i>
-                    <span class="text-sm font-bold text-gray-300 uppercase tracking-wider">What's Happening?</span>
+                    <i class="fas fa-gears text-red-400 text-lg"></i>
+                    <span class="text-sm font-bold text-zinc-300 uppercase tracking-wider">What's Happening?</span>
                 </div>
-                <ul class="text-sm text-gray-400 space-y-3">
+                <ul class="text-sm text-zinc-400 space-y-3">
                     <li class="flex items-start gap-3">
-                        <span class="text-orange-400 font-bold mt-0.5">⚙</span>
+                        <span class="text-red-400 font-bold mt-0.5">⚙</span>
                         <span>An unexpected server error occurred</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="text-orange-400 font-bold mt-0.5">⚙</span>
+                        <span class="text-red-400 font-bold mt-0.5">⚙</span>
                         <span>Our team has been notified automatically</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="text-orange-400 font-bold mt-0.5">⚙</span>
+                        <span class="text-red-400 font-bold mt-0.5">⚙</span>
                         <span>Please try again in a moment</span>
                     </li>
                 </ul>
@@ -109,7 +104,7 @@
             
             <!-- Action Buttons -->
             <div class="flex flex-col sm:flex-row gap-4 justify-center mb-10">
-                <a href="/" class="px-8 py-3.5 bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white font-bold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-2xl shadow-red-500/30 hover:shadow-red-500/50 flex items-center justify-center gap-2">
+                <a href="/" class="px-8 py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-2xl shadow-indigo-500/30 hover:shadow-indigo-500/50 flex items-center justify-center gap-2">
                     <i class="fas fa-home text-lg"></i>
                     <span>Back Home</span>
                 </a>
@@ -120,7 +115,13 @@
             </div>
             
             <!-- Support Message -->
-            <div class="text-center text-sm text-gray-500 max-w-md">
-                <p class="mb-2 font-medium">🆘 Experiencing persistent issues?</p>
-                <p>Contact our support team for immediate assistance. We're here to help!</p>
+            <div class="text-center text-sm text-zinc-500 max-w-md">
+                <p class="mb-2 font-medium">🔧 We're on it!</p>
+                <p>Our team has been notified. Try again in a few moments, or contact support if the issue continues.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/theme.js"></script>
+</body>
 </html>

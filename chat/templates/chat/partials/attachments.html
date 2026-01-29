@@ -1,10 +1,10 @@
 {% if documents %}
 <div class="mt-6 border-t border-white/10 pt-4">
-    <div class="text-xs font-medium text-gray-500 px-3 py-2 mb-1">Attachments</div>
+    <div class="text-xs font-medium text-zinc-500 px-3 py-2 mb-1">Attachments</div>
     <div class="space-y-1">
         {% for doc in documents %}
-        <a href="{{ doc.file.url }}" target="_blank" class="flex items-center gap-2 px-3 py-2 text-xs text-gray-400 hover:text-white hover:bg-[#212121] rounded-lg transition">
-            <i class="fas fa-file-pdf text-red-400"></i>
+        <a href="{{ doc.file.url }}" target="_blank" class="flex items-center gap-2 px-3 py-2 text-xs text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg transition">
+            <i class="fas fa-file-pdf text-indigo-400"></i>
             <span class="truncate font-light">{{ doc.title }}</span>
         </a>
         {% endfor %}

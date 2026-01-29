@@ -1,26 +1,26 @@
 {% if documents %}
     {% for doc in documents %}
-    <a href="{{ doc.file.url }}" target="_blank" class="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.04] border border-white/8 hover:border-emerald-500/40 hover:bg-emerald-500/8 transition-all duration-300 group shadow-lg hover:shadow-xl hover:shadow-emerald-500/20 transform hover:scale-[1.02]">
-        <i class="fas fa-file-pdf text-emerald-400 text-xl flex-shrink-0 group-hover:scale-110 transition-transform duration-300"></i>
+    <a href="{{ doc.file.url }}" target="_blank" class="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.04] border border-white/8 hover:border-indigo-500/40 hover:bg-indigo-500/8 transition-all duration-300 group shadow-lg hover:shadow-xl hover:shadow-indigo-500/20 transform hover:scale-[1.02]">
+        <i class="fas fa-file-pdf text-indigo-400 text-xl flex-shrink-0 group-hover:scale-110 transition-transform duration-300"></i>
         <div class="flex-1 min-w-0">
-            <p class="text-sm text-gray-300 truncate group-hover:text-white transition-colors duration-200 font-semibold">{{ doc.title }}</p>
-            <p class="text-xs text-gray-500 mt-1 flex items-center gap-1.5">
+            <p class="text-sm text-zinc-300 truncate group-hover:text-white transition-colors duration-200 font-semibold">{{ doc.title }}</p>
+            <p class="text-xs text-zinc-500 mt-1 flex items-center gap-1.5">
                 <i class="far fa-clock"></i>
                 {{ doc.uploaded_at|date:"M d, H:i" }}
             </p>
         </div>
-        <i class="fas fa-download text-gray-600 group-hover:text-emerald-400 transition-all duration-200 opacity-0 group-hover:opacity-100 transform group-hover:translate-y-0 translate-y-2"></i>
+        <i class="fas fa-download text-zinc-600 group-hover:text-indigo-400 transition-all duration-200 opacity-0 group-hover:opacity-100 transform group-hover:translate-y-0 translate-y-2"></i>
     </a>
     {% endfor %}
 {% else %}
     <div class="flex items-center justify-center h-full text-center py-12">
         <div class="space-y-4">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-green-600/10 flex items-center justify-center mx-auto">
-                <i class="fas fa-inbox text-4xl text-gray-600"></i>
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-violet-600/10 flex items-center justify-center mx-auto">
+                <i class="fas fa-inbox text-4xl text-zinc-600"></i>
             </div>
             <div>
-                <p class="text-sm text-gray-500 font-semibold">No attachments yet</p>
-                <p class="text-xs text-gray-600 mt-2">Upload PDFs to enhance your chat</p>
+                <p class="text-sm text-zinc-500 font-semibold">No attachments yet</p>
+                <p class="text-xs text-zinc-600 mt-2">Upload PDFs to enhance your chat</p>
             </div>
         </div>
     </div>

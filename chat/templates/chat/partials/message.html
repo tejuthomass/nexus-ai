@@ -1,6 +1,6 @@
 <div class="max-w-3xl mx-auto w-full group animate-[fadeIn_0.3s_ease-out_forwards]">
     <div class="flex justify-end mb-6">
-        <div class="max-w-[85%] bg-gradient-to-br from-blue-600/90 to-purple-600/90 text-white px-6 py-4 rounded-2xl rounded-tr-md shadow-xl shadow-blue-500/20 border border-blue-500/30">
+        <div class="max-w-[85%] bg-gradient-to-br from-indigo-600/80 to-violet-600/70 text-white px-5 py-3.5 rounded-2xl rounded-tr-lg shadow-xl shadow-indigo-500/20 border border-indigo-500/40">
             <div class="whitespace-pre-wrap text-[15px] leading-relaxed font-medium">{{ message.content }}</div>
         </div>
     </div>
@@ -8,22 +8,22 @@
 
 <div class="max-w-3xl mx-auto w-full group animate-[fadeIn_0.3s_ease-out_forwards]">
     <div class="flex gap-4 mb-8 animate-[fadeIn_0.3s_ease-out_forwards]">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex-shrink-0 flex items-center justify-center text-white text-xs flex-none shadow-lg shadow-green-500/30">
-            <i class="fas fa-bolt text-base"></i>
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 flex-shrink-0 flex items-center justify-center text-white text-xs flex-none shadow-lg shadow-indigo-500/30">
+            <i class="fas fa-zap text-sm"></i>
         </div>
         <div class="flex-1 min-w-0 pt-0.5">
             <div class="flex items-center gap-2">
-                <div class="font-bold text-sm text-green-400 mb-2">Nexus</div>
+                <div class="font-bold text-sm text-indigo-400 mb-2">Nexus</div>
                 {% if model_used %}
                 <div class="relative model-info-container group/model">
-                    <i class="fas fa-circle-info text-xs text-gray-500 hover:text-gray-400 cursor-help transition mb-2"></i>
-                    <div class="absolute left-0 bottom-full mb-2 hidden group-hover/model:block bg-[#1a1a1a] text-gray-300 text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap border border-white/10 z-50">
+                    <i class="fas fa-circle-info text-xs text-zinc-500 hover:text-zinc-400 cursor-help transition mb-2"></i>
+                    <div class="absolute left-0 bottom-full mb-2 hidden group-hover/model:block bg-[#1a1a24] text-zinc-300 text-xs px-2.5 py-1.5 rounded-lg shadow-lg whitespace-nowrap border border-white/10 z-50 backdrop-blur-sm">
                         {{ model_used }}
                     </div>
                 </div>
                 {% endif %}
             </div>
-            <div class="prose prose-invert max-w-none text-gray-200 leading-relaxed markdown-body">
+            <div class="prose prose-invert max-w-none text-zinc-200 leading-relaxed markdown-body">
                 {{ response_html|safe }}
             </div>
         </div>

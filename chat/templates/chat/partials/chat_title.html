@@ -1,5 +1,5 @@
 <div class="flex items-center gap-2 group" id="chat-title-container">
-    <h2 class="font-semibold text-gray-200 truncate max-w-md {% if session.messages.count > 0 %}cursor-text hover:text-white transition{% endif %}" 
+    <h2 class="font-semibold text-zinc-200 truncate max-w-md {% if session.messages.count > 0 %}cursor-text hover:text-white transition{% endif %}" 
         id="title-text-{{ session.id }}"
         {% if session.messages.count > 0 %}onclick="enterEditMode('{{ session.id }}')"{% endif %}>
         {{ session.title }}
@@ -8,14 +8,14 @@
     {% if session.messages.count > 0 %}
     <button id="edit-btn-{{ session.id }}"
             onclick="enterEditMode('{{ session.id }}')" 
-            class="text-gray-500 hover:text-white opacity-0 group-hover:opacity-100 transition flex-shrink-0" 
+            class="text-zinc-500 hover:text-white opacity-0 group-hover:opacity-100 transition flex-shrink-0" 
             title="Rename chat">
         <i class="fas fa-pencil-alt text-xs"></i>
     </button>
 
     <!-- Only show delete button for admins -->
     {% if is_admin %}
-    <button id="delete-btn-{{ session.id }}" class="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition flex-shrink-0"
+    <button id="delete-btn-{{ session.id }}" class="text-zinc-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition flex-shrink-0"
             hx-post="{% url 'delete_user_chat_session' session.id %}"
             hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
             hx-confirm="Delete this chat session? All messages and attachments will be removed."
@@ -29,7 +29,7 @@
         <input type="text" 
                id="title-input-{{ session.id }}"
                value="{{ session.title }}" 
-               class="flex-1 bg-[#2a2a2a] text-white border-2 border-[#3d3d3d] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2dd4bf]/60 focus:ring-1 focus:ring-[#2dd4bf]/20 transition-all duration-150 shadow-sm"
+               class="flex-1 bg-[#1a1a24] text-white border-2 border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/20 transition-all duration-150 shadow-sm"
                placeholder="Enter new chat title"
                maxlength="100"
                onkeydown="handleTitleKeydown(event, '{{ session.id }}')"

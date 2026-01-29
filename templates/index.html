@@ -3,45 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus - Chat Platform</title>
+    <title>Nexus - Intelligent Chat Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/theme.css">
     <style>
-        * {
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        
         body { 
             font-family: 'Inter', sans-serif;
-            background: var(--color-bg-primary);
-            color: var(--color-text-primary);
-            position: relative;
-            overflow-x: hidden;
-            transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                        color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, #0a0a0f 0%, #12121a 50%, #0a0a0f 100%);
         }
         
-        /* Light mode specific backgrounds */
-        html.light body {
-            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 50%, #f3f4f6 100%);
-        }
-        
-        /* Dark mode background */
-        html.dark body {
-            background: #020617;
-        }
-        
-        /* Subtle animated background gradient */
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-        
+        /* Animated gradient for accents */
         .hero-gradient {
-            background: linear-gradient(135deg, #10b981 0%, #3b82f6 50%, #8b5cf6 100%);
+            background: linear-gradient(135deg, #6366f1 0%, #3b82f6 50%, #8b5cf6 100%);
             background-size: 200% 200%;
             animation: gradientShift 15s ease infinite;
         }
@@ -74,72 +49,73 @@
             animation: float 3s ease-in-out infinite;
         }
         
-        /* Glow effect for elements */
-        .glow {
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
-        }
-        
-        /* Button transitions */
-        .btn {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #059669; }
-        
         /* Feature card styles */
         .feature-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: var(--color-bg-surface);
-            border: 1px solid var(--color-border-subtle);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent, rgba(99, 102, 241, 0.08));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
         }
         
         .feature-card:hover {
-            background: var(--color-bg-surface-hover);
-            border-color: rgba(16, 185, 129, 0.3);
-            transform: translateY(-2px);
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(99, 102, 241, 0.12);
         }
         
-        /* Glassmorphism effect */
-        .glass {
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        .feature-card:hover::before {
+            opacity: 1;
         }
         
-        /* Light mode text color overrides */
-        html.light .text-gray-400 { color: #6b7280; }
-        html.light .text-gray-300 { color: #d1d5db; }
-        html.light .text-white { color: #1f2937; }
-        html.light .border-white { border-color: #e5e7eb; }
+        /* Navigation */
+        nav {
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        
+        /* Responsive */
+        @media (max-width: 640px) {
+            h1 { font-size: 2.5rem; }
+            .feature-card { padding: 1.25rem; }
+            nav .flex.gap-3 { gap: 0.5rem; }
+        }
     </style>
 </head>
-<body class="text-gray-100 relative">
+<body class="text-zinc-100 relative">
     
     <!-- Navigation -->
-    <nav class="fixed top-0 w-full z-50 backdrop-blur-md border-b border-white/5">
+    <nav class="fixed top-0 w-full z-50 border-b border-white/5">
         <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center">
-                    <i class="fas fa-zap text-white text-lg font-bold"></i>
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                    <i class="fas fa-bolt text-white text-lg"></i>
                 </div>
-                <span class="text-xl font-black bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">Nexus</span>
+                <span class="text-xl font-bold text-white">Nexus</span>
             </div>
             
             <div class="flex gap-3 items-center">
-                <button data-theme-toggle class="btn p-2 bg-white/8 hover:bg-white/12 border border-white/15 rounded-lg inline-flex items-center justify-center" aria-label="Toggle theme">
-                    <i class="fas fa-sun text-white"></i>
-                </button>
                 {% if user.is_authenticated %}
-                    <a href="{% url 'chat' %}" class="btn px-6 py-2 bg-white/8 hover:bg-white/12 border border-white/15 text-white font-medium rounded-lg">
-                        <i class="fas fa-message-bot mr-2"></i>Dashboard
+                    <a href="{% url 'chat' %}" class="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-semibold rounded-lg shadow-lg shadow-indigo-500/25 transition-all duration-200 flex items-center gap-2">
+                        <i class="fas fa-comments"></i>
+                        <span>Open Chat</span>
                     </a>
                 {% else %}
-                    <a href="/accounts/login/" class="btn px-6 py-2 bg-white/8 hover:bg-white/12 border border-white/15 text-white font-medium rounded-lg">
-                        <i class="fas fa-sign-in-alt mr-2"></i>Sign In
+                    <a href="/accounts/login/" class="px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-semibold rounded-lg shadow-lg shadow-indigo-500/25 transition-all duration-200 flex items-center gap-2">
+                        <i class="fas fa-arrow-right"></i>
+                        <span>Get Started</span>
                     </a>
                 {% endif %}
             </div>
@@ -150,33 +126,37 @@
     <section class="relative min-h-screen pt-20 px-6 flex items-center justify-center overflow-hidden">
         <!-- Background gradient orbs -->
         <div class="absolute inset-0 -z-10">
-            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-br from-emerald-500/20 to-transparent rounded-full blur-3xl opacity-40"></div>
-            <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-to-br from-blue-500/20 to-transparent rounded-full blur-3xl opacity-30"></div>
+            <div class="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-indigo-600/15 to-transparent rounded-full blur-3xl"></div>
+            <div class="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-blue-600/10 to-transparent rounded-full blur-3xl"></div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-violet-600/10 to-transparent rounded-full blur-3xl"></div>
         </div>
         
         <div class="max-w-4xl mx-auto text-center z-10">
-            <div class="animate-fade-in-up space-y-6">
-                <h1 class="text-5xl md:text-7xl font-black leading-tight">
-                    <span class="text-white">Your AI Chat</span><br/>
-                    <span class="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">Experience</span>
+            <div class="animate-fade-in-up space-y-8">
+                <h1 class="text-5xl md:text-7xl font-extrabold leading-tight tracking-tight">
+                    <span class="text-zinc-100">Intelligent</span><br/>
+                    <span class="bg-gradient-to-r from-indigo-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">Conversations</span>
                 </h1>
                 
-                <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto">
-                    Intelligent conversations powered by advanced AI. Analyze documents instantly. Get insights faster.
+                <p class="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+                    Advanced chat with document analysis. Get instant insights from your PDFs with intelligent semantic search.
                 </p>
                 
-                <div class="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+                <div class="flex flex-col sm:flex-row gap-4 justify-center pt-2">
                     {% if user.is_authenticated %}
-                        <a href="{% url 'chat' %}" class="btn px-8 py-3 bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:shadow-emerald-500/20 inline-flex items-center justify-center">
-                            <i class="fas fa-arrow-right mr-2"></i>Go to Chat
+                        <a href="{% url 'chat' %}" class="px-8 py-3.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-semibold rounded-lg shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-200 inline-flex items-center justify-center gap-2">
+                            <span>Open Chat</span>
+                            <i class="fas fa-arrow-right"></i>
                         </a>
                     {% else %}
-                        <a href="/accounts/login/" class="btn px-8 py-3 bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:shadow-emerald-500/20 inline-flex items-center justify-center">
-                            <i class="fas fa-arrow-right mr-2"></i>Start Free
+                        <a href="/accounts/login/" class="px-8 py-3.5 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-semibold rounded-lg shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-200 inline-flex items-center justify-center gap-2">
+                            <span>Get Started</span>
+                            <i class="fas fa-arrow-right"></i>
                         </a>
                     {% endif %}
-                    <a href="#features" class="btn px-8 py-3 bg-white/8 hover:bg-white/12 border border-white/15 text-white font-semibold rounded-lg inline-flex items-center justify-center">
-                        <i class="fas fa-arrow-down mr-2"></i>Learn More
+                    <a href="#features" class="px-8 py-3.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-zinc-200 font-medium rounded-lg transition-all duration-200 inline-flex items-center justify-center gap-2">
+                        <span>Learn More</span>
+                        <i class="fas fa-chevron-down text-sm"></i>
                     </a>
                 </div>
             </div>
@@ -184,104 +164,104 @@
     </section>
     
     <!-- Features Section -->
-    <section id="features" class="relative py-20 px-6">
+    <section id="features" class="relative py-24 px-6">
         <div class="max-w-6xl mx-auto">
             <div class="text-center mb-16 animate-fade-in">
-                <h2 class="text-4xl md:text-5xl font-black text-white mb-4">Powerful Features</h2>
-                <p class="text-gray-400 text-lg max-w-2xl mx-auto">Everything you need for smart conversations and document analysis</p>
+                <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">Powerful Features</h2>
+                <p class="text-zinc-400 text-lg max-w-2xl mx-auto">Everything you need for smart conversations and document analysis</p>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 <!-- Feature 1 -->
-                <div class="feature-card p-6 rounded-xl group">
-                    <div class="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center mb-4 group-hover:bg-emerald-500/30 transition-colors">
-                        <i class="fas fa-comments text-xl text-emerald-400"></i>
+                <div class="feature-card p-6 group">
+                    <div class="w-12 h-12 rounded-lg bg-indigo-500/15 flex items-center justify-center mb-4 group-hover:bg-indigo-500/25 transition-colors">
+                        <i class="fas fa-comments text-xl text-indigo-400"></i>
                     </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Natural Chat</h3>
-                    <p class="text-gray-400 text-sm">Seamless conversations with context awareness and instant responses</p>
+                    <h3 class="text-lg font-semibold text-white mb-2">Natural Chat</h3>
+                    <p class="text-zinc-400 text-sm leading-relaxed">Seamless conversations with context awareness and instant responses</p>
                 </div>
                 
                 <!-- Feature 2 -->
-                <div class="feature-card p-6 rounded-xl group">
-                    <div class="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center mb-4 group-hover:bg-blue-500/30 transition-colors">
+                <div class="feature-card p-6 group">
+                    <div class="w-12 h-12 rounded-lg bg-blue-500/15 flex items-center justify-center mb-4 group-hover:bg-blue-500/25 transition-colors">
                         <i class="fas fa-file-pdf text-xl text-blue-400"></i>
                     </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Document Analysis</h3>
-                    <p class="text-gray-400 text-sm">Upload PDFs and analyze them with advanced semantic search</p>
+                    <h3 class="text-lg font-semibold text-white mb-2">Document Analysis</h3>
+                    <p class="text-zinc-400 text-sm leading-relaxed">Upload PDFs and analyze them with advanced semantic search</p>
                 </div>
                 
                 <!-- Feature 3 -->
-                <div class="feature-card p-6 rounded-xl group">
-                    <div class="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center mb-4 group-hover:bg-purple-500/30 transition-colors">
-                        <i class="fas fa-brain text-xl text-purple-400"></i>
+                <div class="feature-card p-6 group">
+                    <div class="w-12 h-12 rounded-lg bg-violet-500/15 flex items-center justify-center mb-4 group-hover:bg-violet-500/25 transition-colors">
+                        <i class="fas fa-brain text-xl text-violet-400"></i>
                     </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Smart Search</h3>
-                    <p class="text-gray-400 text-sm">Vector-based search for precise and relevant information retrieval</p>
+                    <h3 class="text-lg font-semibold text-white mb-2">Smart Search</h3>
+                    <p class="text-zinc-400 text-sm leading-relaxed">Vector-based search for precise and relevant information retrieval</p>
                 </div>
                 
                 <!-- Feature 4 -->
-                <div class="feature-card p-6 rounded-xl group">
-                    <div class="w-12 h-12 rounded-lg bg-cyan-500/20 flex items-center justify-center mb-4 group-hover:bg-cyan-500/30 transition-colors">
+                <div class="feature-card p-6 group">
+                    <div class="w-12 h-12 rounded-lg bg-cyan-500/15 flex items-center justify-center mb-4 group-hover:bg-cyan-500/25 transition-colors">
                         <i class="fas fa-wand-magic-sparkles text-xl text-cyan-400"></i>
                     </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Powerful AI</h3>
-                    <p class="text-gray-400 text-sm">Advanced language models for intelligent and accurate responses</p>
+                    <h3 class="text-lg font-semibold text-white mb-2">Powerful Engine</h3>
+                    <p class="text-zinc-400 text-sm leading-relaxed">Advanced language models for intelligent and accurate responses</p>
                 </div>
                 
                 <!-- Feature 5 -->
-                <div class="feature-card p-6 rounded-xl group">
-                    <div class="w-12 h-12 rounded-lg bg-red-500/20 flex items-center justify-center mb-4 group-hover:bg-red-500/30 transition-colors">
-                        <i class="fas fa-lock text-xl text-red-400"></i>
+                <div class="feature-card p-6 group">
+                    <div class="w-12 h-12 rounded-lg bg-rose-500/15 flex items-center justify-center mb-4 group-hover:bg-rose-500/25 transition-colors">
+                        <i class="fas fa-lock text-xl text-rose-400"></i>
                     </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Secure & Private</h3>
-                    <p class="text-gray-400 text-sm">Enterprise-grade security with full data privacy controls</p>
+                    <h3 class="text-lg font-semibold text-white mb-2">Secure & Private</h3>
+                    <p class="text-zinc-400 text-sm leading-relaxed">Enterprise-grade security with full data privacy controls</p>
                 </div>
                 
                 <!-- Feature 6 -->
-                <div class="feature-card p-6 rounded-xl group">
-                    <div class="w-12 h-12 rounded-lg bg-pink-500/20 flex items-center justify-center mb-4 group-hover:bg-pink-500/30 transition-colors">
-                        <i class="fas fa-bolt text-xl text-pink-400"></i>
+                <div class="feature-card p-6 group">
+                    <div class="w-12 h-12 rounded-lg bg-amber-500/15 flex items-center justify-center mb-4 group-hover:bg-amber-500/25 transition-colors">
+                        <i class="fas fa-bolt text-xl text-amber-400"></i>
                     </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Lightning Fast</h3>
-                    <p class="text-gray-400 text-sm">Optimized performance with real-time processing and updates</p>
+                    <h3 class="text-lg font-semibold text-white mb-2">Lightning Fast</h3>
+                    <p class="text-zinc-400 text-sm leading-relaxed">Optimized performance with real-time processing and updates</p>
                 </div>
             </div>
         </div>
     </section>
     
     <!-- Capabilities Section -->
-    <section class="relative py-20 px-6">
+    <section class="relative py-24 px-6">
         <div class="max-w-6xl mx-auto">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="space-y-4 animate-fade-in">
-                    <div class="text-4xl font-black bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">Real-time</div>
-                    <p class="text-gray-400">Get instant responses with advanced AI models</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <div class="space-y-3 animate-fade-in">
+                    <div class="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-blue-400 bg-clip-text text-transparent">Real-time</div>
+                    <p class="text-zinc-400 leading-relaxed">Get instant responses with advanced language models</p>
                 </div>
                 
-                <div class="space-y-4 animate-fade-in" style="animation-delay: 0.1s;">
-                    <div class="text-4xl font-black bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Flexible</div>
-                    <p class="text-gray-400">Adaptable to your unique conversation needs</p>
+                <div class="space-y-3 animate-fade-in" style="animation-delay: 0.1s;">
+                    <div class="text-4xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Flexible</div>
+                    <p class="text-zinc-400 leading-relaxed">Adaptable to your unique conversation needs</p>
                 </div>
                 
-                <div class="space-y-4 animate-fade-in" style="animation-delay: 0.2s;">
-                    <div class="text-4xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Smart</div>
-                    <p class="text-gray-400">Intelligent document processing and analysis</p>
+                <div class="space-y-3 animate-fade-in" style="animation-delay: 0.2s;">
+                    <div class="text-4xl font-bold bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">Smart</div>
+                    <p class="text-zinc-400 leading-relaxed">Intelligent document processing and analysis</p>
                 </div>
             </div>
         </div>
     </section>
     
     <!-- Footer -->
-    <footer class="relative border-t border-white/5 py-12 px-6">
+    <footer class="relative border-t border-white/5 py-10 px-6">
         <div class="max-w-6xl mx-auto">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center">
-                        <i class="fas fa-zap text-white text-sm font-bold"></i>
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center">
+                        <i class="fas fa-bolt text-white text-sm"></i>
                     </div>
-                    <span class="font-black bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">Nexus</span>
+                    <span class="font-semibold text-white">Nexus</span>
                 </div>
-                <p class="text-sm text-gray-500">© 2026 Nexus. Built for modern conversations.</p>
+                <p class="text-sm text-zinc-500">© 2026 Nexus. Built for modern conversations.</p>
             </div>
         </div>
     </footer>
@@ -299,7 +279,5 @@
         });
     </script>
     <script src="/static/js/theme.js"></script>
-</body>
-</html>
 </body>
 </html>

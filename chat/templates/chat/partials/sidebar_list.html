@@ -1,9 +1,9 @@
 {% for session in chat_sessions %}
 <a href="{% url 'chat_session' session.id %}" 
-   class="group flex items-center gap-3 px-3 py-3 text-sm rounded-xl transition-all duration-200 relative overflow-hidden
-          {% if session.id == current_session.id %} bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 text-white active-chat shadow-lg {% else %} text-gray-400 hover:bg-white/5 hover:text-white border border-transparent hover:border-white/10 {% endif %}"
+   class="group flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl transition-all duration-200 relative overflow-hidden
+          {% if session.id == current_session.id %} bg-gradient-to-r from-indigo-600/20 to-violet-600/15 border border-indigo-500/30 text-white active-chat shadow-lg {% else %} text-zinc-400 hover:bg-white/5 hover:text-white border border-transparent hover:border-white/10 {% endif %}"
    onclick="return preventChatReselect(event, '{{ session.id }}')">
-    <i class="far fa-message text-sm {% if session.id == current_session.id %}text-blue-400{% endif %}"></i>
-    <div class="flex-1 truncate relative z-10 text-sm {% if session.id == current_session.id %}font-medium{% else %}font-light{% endif %}">{{ session.title }}</div>
+    <i class="fas fa-message text-xs {% if session.id == current_session.id %}text-indigo-400{% endif %}"></i>
+    <div class="flex-1 truncate relative z-10 text-xs {% if session.id == current_session.id %}font-semibold{% else %}font-light{% endif %}">{{ session.title }}</div>
 </a>
 {% endfor %}

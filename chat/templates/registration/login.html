@@ -9,16 +9,9 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/theme.css">
     <style>
-        * {
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        
         body { 
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #05080f 0%, #0d1621 50%, #050a12 100%);
-            position: relative;
-            overflow: hidden;
+            background: linear-gradient(135deg, #0a0a0f 0%, #12121a 50%, #0a0a0f 100%);
         }
         
         /* Animated gradient background */
@@ -33,7 +26,7 @@
         }
         
         .hero-gradient {
-            background: linear-gradient(135deg, #10b981 0%, #3b82f6 50%, #8b5cf6 100%);
+            background: linear-gradient(135deg, #6366f1 0%, #3b82f6 50%, #8b5cf6 100%);
             background-size: 200% 200%;
             animation: gradientShift 15s ease infinite;
         }
@@ -57,33 +50,14 @@
             animation: fadeIn 0.5s ease-out;
         }
         
-        /* Floating particles */
-        .particle {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(59, 130, 246, 0.1);
-            pointer-events: none;
-            filter: blur(1px);
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) translateX(0px); }
-            50% { transform: translateY(-40px) translateX(20px); }
-        }
-        
         /* Input focus glow */
         .input-glow:focus {
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15), inset 0 0 0 1px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), inset 0 0 0 1px rgba(99, 102, 241, 0.3);
         }
-        
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 5px; }
         
         /* Smooth transitions */
         .btn-primary {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
             overflow: hidden;
         }
@@ -96,7 +70,7 @@
             width: 0;
             height: 0;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
             transform: translate(-50%, -50%);
             transition: width 0.6s, height 0.6s;
         }
@@ -107,26 +81,20 @@
         }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen text-gray-100 relative p-4">
-    
-    <!-- Particle Background -->
-    <div class="fixed inset-0 overflow-hidden pointer-events-none" id="particles"></div>
+<body class="flex items-center justify-center min-h-screen text-zinc-100 relative p-4">
     
     <!-- Background glow effects -->
     <div class="fixed inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-        <div class="absolute w-[700px] h-[700px] hero-gradient opacity-8 blur-[140px] rounded-full" style="top: 20%; left: -10%;"></div>
-        <div class="absolute w-[600px] h-[600px] hero-gradient opacity-5 blur-[120px] rounded-full" style="bottom: -20%; right: -10%; animation: drift 20s ease-in-out infinite;"></div>
+        <div class="absolute w-[600px] h-[600px] bg-indigo-600/8 blur-[140px] rounded-full" style="top: 10%; left: -5%;"></div>
+        <div class="absolute w-[500px] h-[500px] bg-blue-600/5 blur-[120px] rounded-full" style="bottom: -10%; right: -5%; animation: drift 20s ease-in-out infinite;"></div>
     </div>
     
     <!-- Back to Home Link -->
-    <div class="fixed top-6 left-6 z-10 animate-fade-in flex gap-2">
-        <a href="/" class="flex items-center gap-2 px-4 py-2.5 bg-white/8 hover:bg-white/12 border border-white/15 hover:border-white/25 rounded-xl text-gray-300 hover:text-white transition-all duration-300 backdrop-blur-sm text-sm font-medium">
+    <div class="fixed top-6 left-6 z-10 animate-fade-in">
+        <a href="/" class="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/15 rounded-xl text-zinc-400 hover:text-white transition-all duration-200 text-sm font-medium">
             <i class="fas fa-chevron-left"></i>
             <span>Back Home</span>
         </a>
-        <button data-theme-toggle class="p-2.5 bg-white/8 hover:bg-white/12 border border-white/15 rounded-xl text-gray-300 hover:text-white transition-all duration-300 backdrop-blur-sm" aria-label="Toggle theme">
-            <i class="fas fa-sun"></i>
-        </button>
     </div>
     
     <!-- Login Card -->
@@ -134,25 +102,25 @@
         
         <!-- Logo Section -->
         <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 via-green-500 to-cyan-600 mb-4 shadow-2xl shadow-green-500/30 transform hover:scale-110 transition-transform duration-300">
-                <i class="fas fa-zap text-3xl text-white font-bold"></i>
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 via-blue-500 to-violet-600 mb-5 shadow-2xl shadow-indigo-500/30 transform hover:scale-105 transition-transform duration-200">
+                <i class="fas fa-bolt text-3xl text-white"></i>
             </div>
-            <h1 class="text-3xl font-black bg-gradient-to-r from-emerald-400 via-green-400 to-cyan-400 bg-clip-text text-transparent mb-2 tracking-tight">
+            <h1 class="text-3xl font-bold text-white mb-2 tracking-tight">
                 Nexus
             </h1>
-            <p class="text-gray-400 text-sm">Sign in to your account</p>
+            <p class="text-zinc-400 text-sm">Sign in to your account</p>
         </div>
         
         <!-- Login Form Card -->
-        <div class="p-8 bg-gradient-to-br from-white/10 to-white/5 rounded-3xl shadow-2xl border border-white/10 backdrop-blur-xl">
+        <div class="p-8 bg-gradient-to-br from-white/6 to-white/2 rounded-2xl shadow-2xl border border-white/8 backdrop-blur-xl">
             
             <form method="POST" class="space-y-5">
                 {% csrf_token %}
                 
                 <!-- Error Message -->
                 {% if form.errors %}
-                <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-2xl animate-fade-in">
-                    <div class="flex items-center justify-center gap-3 text-red-300">
+                <div class="p-4 bg-red-500/10 border border-red-500/25 rounded-xl animate-fade-in">
+                    <div class="flex items-center justify-center gap-3 text-red-400">
                         <i class="fas fa-circle-exclamation text-lg"></i>
                         <span class="text-sm font-medium">Invalid credentials</span>
                     </div>
@@ -160,33 +128,33 @@
                 {% endif %}
 
                 <!-- Username Field -->
-                <div class="space-y-2.5">
-                    <label class="block text-sm font-semibold text-gray-300 ml-1">
-                        <i class="fas fa-user mr-2.5 text-gray-500"></i>Username
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-zinc-300 ml-1">
+                        <i class="fas fa-user mr-2 text-zinc-500"></i>Username
                     </label>
                     <input type="text" 
                            name="username" 
                            required 
                            autofocus
-                           class="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 text-white placeholder-gray-500 transition-all outline-none input-glow hover:bg-white/[0.07]"
+                           class="w-full px-4 py-3.5 bg-white/4 border border-white/8 rounded-xl focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 text-white placeholder-zinc-500 transition-all outline-none input-glow hover:bg-white/6"
                            placeholder="Enter your username">
                 </div>
                 
                 <!-- Password Field -->
-                <div class="space-y-2.5">
-                    <label class="block text-sm font-semibold text-gray-300 ml-1">
-                        <i class="fas fa-lock mr-2.5 text-gray-500"></i>Password
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-zinc-300 ml-1">
+                        <i class="fas fa-lock mr-2 text-zinc-500"></i>Password
                     </label>
                     <div class="relative">
                         <input type="password" 
                                name="password" 
                                required
                                id="password-input"
-                               class="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 text-white placeholder-gray-500 transition-all outline-none input-glow hover:bg-white/[0.07] pr-12"
+                               class="w-full px-4 py-3.5 bg-white/4 border border-white/8 rounded-xl focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 text-white placeholder-zinc-500 transition-all outline-none input-glow hover:bg-white/6 pr-12"
                                placeholder="Enter your password">
                         <button type="button"
                                 onclick="togglePassword()"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors p-2">
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors p-2">
                             <i class="fas fa-eye" id="eye-icon"></i>
                         </button>
                     </div>
@@ -194,7 +162,7 @@
 
                 <!-- Sign In Button -->
                 <button type="submit" 
-                        class="w-full py-3.5 btn-primary bg-gradient-to-r from-emerald-500 via-green-500 to-cyan-600 hover:from-emerald-600 hover:via-green-600 hover:to-cyan-700 text-white font-bold rounded-xl transition-all duration-300 shadow-xl shadow-green-500/30 hover:shadow-green-500/50 transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 mt-6">
+                        class="w-full py-3.5 btn-primary bg-gradient-to-r from-indigo-500 via-blue-500 to-violet-600 hover:from-indigo-600 hover:via-blue-600 hover:to-violet-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 transform hover:translate-y-[-1px] active:translate-y-0 flex items-center justify-center gap-3 mt-6">
                     <i class="fas fa-arrow-right-to-bracket"></i>
                     <span>Sign In</span>
                 </button>
@@ -203,27 +171,27 @@
             <!-- Divider -->
             <div class="relative my-6">
                 <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-white/10"></div>
+                    <div class="w-full border-t border-white/8"></div>
                 </div>
                 <div class="relative flex justify-center text-xs">
-                    <span class="px-3 bg-gradient-to-br from-white/10 to-white/5 text-gray-500 uppercase tracking-wider font-semibold">Secure Access</span>
+                    <span class="px-3 bg-[#12121a] text-zinc-500 uppercase tracking-wider font-medium">Secure Access</span>
                 </div>
             </div>
             
             <!-- Info Message -->
-            <div class="text-center p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
-                <p class="text-xs text-blue-300 font-medium">
+            <div class="text-center p-4 bg-indigo-500/8 border border-indigo-500/15 rounded-xl">
+                <p class="text-xs text-indigo-300 font-medium">
                     <i class="fas fa-info-circle mr-2"></i>
                     Private Access Only
                 </p>
-                <p class="text-xs text-gray-500 mt-2">
+                <p class="text-xs text-zinc-500 mt-2">
                     Contact your administrator for credentials
                 </p>
             </div>
         </div>
         
         <!-- Footer Links -->
-        <div class="mt-6 text-center text-xs text-gray-500">
+        <div class="mt-6 text-center text-xs text-zinc-500">
             <p>Protected by enterprise-grade security</p>
         </div>
     </div>
@@ -243,29 +211,6 @@
                 icon.classList.remove('fa-eye-slash');
                 icon.classList.add('fa-eye');
             }
-        }
-        
-        // Create floating particles
-        const particlesContainer = document.getElementById('particles');
-        const particleCount = 25;
-        
-        for (let i = 0; i < particleCount; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            
-            const size = Math.random() * 5 + 2;
-            const x = Math.random() * window.innerWidth;
-            const y = Math.random() * window.innerHeight;
-            const duration = Math.random() * 25 + 15;
-            const delay = Math.random() * 5;
-            
-            particle.style.width = `${size}px`;
-            particle.style.height = `${size}px`;
-            particle.style.left = `${x}px`;
-            particle.style.top = `${y}px`;
-            particle.style.animation = `float ${duration}s ease-in-out ${delay}s infinite`;
-            
-            particlesContainer.appendChild(particle);
         }
     </script>
     <script src="/static/js/theme.js"></script>
