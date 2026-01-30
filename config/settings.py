@@ -176,22 +176,21 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
 }
 
-WHITENOISE_MANIFEST_STRICT = False
-
-# 1. Modern Django 5+ Storage Configuration
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "OPTIONS": {
+            "manifest_strict": False,
+        },
     },
 }
 
-# 2. REQUIRED COMPATIBILITY FIX
+# 2. REQUIRED COMPATIBILITY FIX (Keep this!)
 # Django 5.2 removed this setting, but django-cloudinary-storage v0.3.0
-# still tries to read it during collectstatic. We define it here explicitly
-# to prevent the AttributeError.
+# still tries to read it during collectstatic.
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # --- AUTH REDIRECTS ---
