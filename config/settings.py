@@ -43,7 +43,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -182,15 +181,13 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        # CHANGED: Use CompressedStaticFilesStorage instead of CompressedManifest...
-        # This disables the strict file checking that is crashing your build.
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        "BACKEND": "cloudinary_storage.storage.StaticHashedCloudinaryStorage",
     },
 }
 
 # 2. REQUIRED COMPATIBILITY FIX
 # Update this fallback to match the backend above
-STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
+STATICFILES_STORAGE = "cloudinary_storage.storage.StaticHashedCloudinaryStorage"
 
 # --- AUTH REDIRECTS ---
 LOGIN_REDIRECT_URL = '/chat/'  # Go to chat page after login
