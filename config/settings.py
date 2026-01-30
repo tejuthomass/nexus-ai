@@ -89,7 +89,7 @@ if DATABASE_URL:
             'HOST': tmpPostgres.hostname,
             'PORT': 5432,
             'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
-            'CONN_MAX_AGE': 600,
+            'CONN_MAX_AGE': 0,  # Let Neon's PgBouncer handle connection pooling
             'DISABLE_SERVER_SIDE_CURSORS': True,
             'CONN_HEALTH_CHECKS': False,
         }
@@ -181,6 +181,9 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
+
+# Compatibility shim for django-cloudinary-storage (uses old Django 4.x setting)
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # --- AUTH REDIRECTS ---
 LOGIN_REDIRECT_URL = '/chat/'  # Go to chat page after login
