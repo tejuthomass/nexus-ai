@@ -176,6 +176,8 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
 }
 
+WHITENOISE_MANIFEST_STRICT = False
+
 # 1. Modern Django 5+ Storage Configuration
 STORAGES = {
     "default": {
