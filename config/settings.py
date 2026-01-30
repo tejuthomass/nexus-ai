@@ -179,21 +179,23 @@ CLOUDINARY_STORAGE = {
 # ... keys are above this ...
 # settings.py
 
+# 1. Use the best backend (Compression + Caching)
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        # USE THIS SAFE BACKEND:
-        # It copies files simply, without crashing on missing links or threading issues.
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-        # "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 
-# Ensure this shim matches the backend above
-# STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+# 2. Keep the compatibility shim matching the backend above
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# 3. ADD THIS LINE (The Fix from the Docs)
+# This tells WhiteNoise: "If you find a missing file reference (like admin/css/widgets.css),
+# don't crash the build. Just ignore it and keep going."
+WHITENOISE_MANIFEST_STRICT = False
 
 # --- AUTH REDIRECTS ---
 LOGIN_REDIRECT_URL = '/chat/'  # Go to chat page after login
