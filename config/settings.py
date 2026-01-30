@@ -177,20 +177,19 @@ CLOUDINARY_STORAGE = {
 
 # ... keys are above this ...
 
-# DJANGO 5 WAY:
 STORAGES = {
     "default": {
-        # USE MEDIA STORAGE (Allows viewing files in browser)
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        # Use WhiteNoise for serving static files in production (without strict manifest)
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        # CHANGE THIS to "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+        # DO NOT use "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
     },
 }
 
-# Compatibility shim for django-cloudinary-storage (uses old Django 4.x setting)
-STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
+# Compatibility shim
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
 
 # --- AUTH REDIRECTS ---
 LOGIN_REDIRECT_URL = '/chat/'  # Go to chat page after login
