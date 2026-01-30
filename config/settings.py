@@ -176,7 +176,6 @@ CLOUDINARY_STORAGE = {
 }
 
 # ... keys are above this ...
-
 # settings.py
 
 STORAGES = {
@@ -184,14 +183,13 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        # CHANGED: Use the basic StaticFilesStorage.
-        # This disables Hashing and Link Checking, which is what is crashing your build.
+        # USE THIS SAFE BACKEND:
+        # It copies files simply, without crashing on missing links or threading issues.
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 
-# Compatibility shim
-# CHANGED: Match the backend above
+# Ensure this shim matches the backend above
 STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 # --- AUTH REDIRECTS ---
