@@ -176,19 +176,21 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
 }
 
-# ✅ FIXED: Use CompressedStaticFilesStorage (no Manifest) to avoid crashes
+# 1. Modern Django 5+ Storage Configuration
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
 
-# NOTE: STATICFILES_STORAGE is deprecated in Django 4.2+
-# The STORAGES["staticfiles"] setting above is the correct way
-
+# 2. REQUIRED COMPATIBILITY FIX
+# Django 5.2 removed this setting, but django-cloudinary-storage v0.3.0
+# still tries to read it during collectstatic. We define it here explicitly
+# to prevent the AttributeError.
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # --- AUTH REDIRECTS ---
 LOGIN_REDIRECT_URL = '/chat/'  # Go to chat page after login
