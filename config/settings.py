@@ -165,6 +165,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.cloudworkstations.dev',
     'https://*.idx.dev', 
     'http://127.0.0.1:8000',
+    'https://*.onrender.com',
 ]
 
 # Load keys from .env (Security Best Practice)
@@ -185,12 +186,13 @@ STORAGES = {
     "staticfiles": {
         # USE THIS SAFE BACKEND:
         # It copies files simply, without crashing on missing links or threading issues.
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        # "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 
 # Ensure this shim matches the backend above
-STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+# STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 # --- AUTH REDIRECTS ---
 LOGIN_REDIRECT_URL = '/chat/'  # Go to chat page after login
