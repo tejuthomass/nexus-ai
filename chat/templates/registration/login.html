@@ -59,11 +59,32 @@
         input[type="text"],
         input[type="password"] {
             color: #ffffff !important;
-            caret-color: #ffffff;
+            -webkit-text-fill-color: #ffffff !important;
+            caret-color: #ffffff !important;
+            background-color: rgba(255, 255, 255, 0.04) !important;
+        }
+        
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            background-color: rgba(255, 255, 255, 0.06) !important;
+        }
+        
+        /* Fix browser autofill styling */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #1a1a24 inset !important;
+            -webkit-text-fill-color: #ffffff !important;
+            caret-color: #ffffff !important;
+            transition: background-color 5000s ease-in-out 0s;
         }
         
         input::placeholder {
             color: #71717a !important;
+            -webkit-text-fill-color: #71717a !important;
         }
         
         /* Smooth transitions */
