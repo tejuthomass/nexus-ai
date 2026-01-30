@@ -14,13 +14,16 @@ ls -la static/ || echo "No static directory found!"
 ls -la static/css/ || echo "No css directory"
 ls -la static/js/ || echo "No js directory"
 
-# Collect static files (including Django admin static files)
-python manage.py collectstatic --noinput
+# Clear and collect static files fresh (including Django admin static files)
+rm -rf staticfiles/
+python manage.py collectstatic --noinput --clear
 
 # Debug: Show what was collected
 echo "📁 Static files collected:"
 ls -la staticfiles/ || echo "No staticfiles directory"
 ls -la staticfiles/admin/ || echo "No admin static files"
+ls -la staticfiles/css/ || echo "No css directory in staticfiles"
+ls -la staticfiles/js/ || echo "No js directory in staticfiles"
 
 # Create cache table (required for DatabaseCache)
 echo "🗄️ Creating cache table..."
