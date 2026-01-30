@@ -184,13 +184,13 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        # Use WhiteNoise for serving static files in production
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        # Use WhiteNoise for serving static files in production (without strict manifest)
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
 # Compatibility shim for django-cloudinary-storage (uses old Django 4.x setting)
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
 # --- AUTH REDIRECTS ---
 LOGIN_REDIRECT_URL = '/chat/'  # Go to chat page after login
