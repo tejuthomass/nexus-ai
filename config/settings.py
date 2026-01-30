@@ -177,19 +177,22 @@ CLOUDINARY_STORAGE = {
 
 # ... keys are above this ...
 
+# settings.py
+
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        # CHANGE THIS to "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
-        # DO NOT use "whitenoise.storage.CompressedManifestStaticFilesStorage"
-        "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
+        # CHANGED: Use the basic StaticFilesStorage.
+        # This disables Hashing and Link Checking, which is what is crashing your build.
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 
 # Compatibility shim
-STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+# CHANGED: Match the backend above
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 # --- AUTH REDIRECTS ---
 LOGIN_REDIRECT_URL = '/chat/'  # Go to chat page after login
