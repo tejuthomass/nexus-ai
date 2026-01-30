@@ -7,6 +7,7 @@ venv/
 env/
 .env
 .env.*
+!.env.example
 
 # Django
 db.sqlite3
@@ -22,7 +23,13 @@ media/
 .ruff_cache/
 .coverage
 coverage.xml
+
+# Log files
 *.log
+debug.log
+
+# Design/Development docs (not for production)
+design-docs/
 
 # Cloudinary / Static
 # We don't want to track user uploads locally since they are in the cloud

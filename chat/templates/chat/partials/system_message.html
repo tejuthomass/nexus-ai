@@ -1,4 +1,4 @@
-<div class="mx-auto max-w-3xl mb-4 animate-[fadeIn_0.3s_ease-out_forwards]">
+<div id="system-notification-{{ forloop.counter|default:'' }}{{ request.session.session_key|slice:':8'|default:'' }}" class="mx-auto max-w-3xl mb-4 animate-[fadeIn_0.3s_ease-out_forwards] system-notification">
     <div class="flex items-center justify-between px-5 py-3.5 rounded-xl text-sm border shadow-lg
                 {% if error %}bg-gradient-to-r from-red-500/10 to-red-600/5 border-red-500/30 text-red-200{% else %}bg-gradient-to-r from-emerald-500/10 to-green-600/5 border-emerald-500/30 text-emerald-200{% endif %}">
         <div class="flex items-center gap-3">
@@ -9,28 +9,35 @@
             {% endif %}
             <span class="font-medium">{{ content }}</span>
         </div>
-        <button type="button" onclick="this.closest('div').parentElement.remove()" class="{% if error %}text-red-300 hover:text-red-100{% else %}text-emerald-300 hover:text-emerald-100{% endif %} transition-colors p-2 hover:bg-white/10 rounded-lg">
+        <button type="button" onclick="this.closest('.system-notification').remove()" class="{% if error %}text-red-300 hover:text-red-100{% else %}text-emerald-300 hover:text-emerald-100{% endif %} transition-colors p-2 hover:bg-white/10 rounded-lg">
             <i class="fas fa-times"></i>
         </button>
     </div>
 </div>
 
 <script>
-    // Auto-dismiss notification in chat container
+    // Auto-dismiss notification after timeout
     (function() {
-        const notification = document.querySelector('.notification-container') ? null : document.querySelector('[class*="bg-"][class*="border-"]');
+        // Find the most recently added system notification
+        const notifications = document.querySelectorAll('.system-notification');
+        const notification = notifications[notifications.length - 1];
         if (!notification) return;
         
-        const isError = notification.classList.contains('bg-red-500');
-        const duration = isError ? 5500 : 3500; // Error: 5.5s, Success: 3.5s
+        // Check if this is an error notification
+        const isError = notification.querySelector('.border-red-500\\/30') !== null;
+        const duration = isError ? 6000 : 4000; // Error: 6s, Success: 4s
         
         setTimeout(function() {
-            notification.style.animation = 'fadeOut 0.3s ease-out forwards';
-            setTimeout(function() {
-                if (notification.parentElement) {
-                    notification.parentElement.remove();
-                }
-            }, 300);
+            if (notification) {
+                notification.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateY(-10px)';
+                setTimeout(function() {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 300);
+            }
         }, duration);
     })();
     

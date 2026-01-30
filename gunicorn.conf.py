@@ -88,7 +88,7 @@ def on_reload(server):
 def when_ready(server):
     """Called just after the server is started."""
     print(f"✅ Nexus AI server is ready at {bind}")
-    print(f"🔒 Admin panel: /{os.getenv('ADMIN_URL_PATH', 'nexus-core-admin-x7k9p2/')}")
+    print(f"🔒 Admin panel: /{os.getenv('ADMIN_URL_PATH', 'admin/')}")
 
 def worker_int(worker):
     """Called when a worker receives the SIGINT or SIGQUIT signal."""

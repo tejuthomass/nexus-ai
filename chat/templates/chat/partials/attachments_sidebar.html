@@ -48,15 +48,7 @@
                 <span>Max size: 5MB</span>
             </div>
         </form>
-        
-        <!-- Error/Success Messages -->
-        <div id="upload-message" class="mt-2"></div>
-    </div>
-    
-    <!-- Attachments List -->
-    <div id="attachments-list" class="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar">
-        {% include 'chat/partials/attachments_list.html' with documents=documents %}
-    </div>
+
 </div>
 
 <script>
@@ -98,17 +90,13 @@ function resetFileInput() {
 
 function validateAndUploadFile(input) {
     const file = input.files[0];
-    const messageDiv = document.getElementById('upload-message');
     const form = document.getElementById('pdf-upload-form');
-    
-    // Clear previous messages
-    messageDiv.innerHTML = '';
     
     if (!file) return;
     
     // Validate file type
     if (!file.name.toLowerCase().endsWith('.pdf')) {
-        showErrorMessage(messageDiv, '❌ Invalid file type. Only PDF files are allowed.');
+        showNotification('Invalid file type. Only PDF files are allowed.', 'error', 5000);
         input.value = '';
         return;
     }
@@ -116,9 +104,10 @@ function validateAndUploadFile(input) {
     // Validate file size
     if (file.size > MAX_FILE_SIZE_BYTES) {
         const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        showErrorMessage(
-            messageDiv,
-            '❌ File too large!<br><br>📊 File size: ' + fileSizeMB + 'MB<br>📏 Maximum allowed: ' + MAX_FILE_SIZE_MB + 'MB<br><br>💡 Try compressing the PDF or splitting it into smaller files.'
+        showNotification(
+            'File too large! Size: ' + fileSizeMB + 'MB (Max: ' + MAX_FILE_SIZE_MB + 'MB). Try compressing or splitting the PDF.',
+            'error',
+            6000
         );
         input.value = '';
         updateFileLabel('');
@@ -150,7 +139,7 @@ function validateAndUploadFile(input) {
     })
     .catch(error => {
         console.error('Upload failed:', error);
-        showErrorMessage(messageDiv, '❌ Upload failed. Please try again.');
+        showNotification('Upload failed. Please try again.', 'error', 5000);
     })
     .finally(() => {
         hideUploadIndicator();
@@ -181,13 +170,5 @@ function enableChatInput() {
     if (submitBtn) {
         submitBtn.disabled = false;
     }
-}
-
-function showErrorMessage(container, message) {
-    container.innerHTML = `
-        <div class="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-xs text-red-300">
-            ${message}
-        </div>
-    `;
 }
 </script>

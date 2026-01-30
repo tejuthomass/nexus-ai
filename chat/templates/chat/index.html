@@ -431,7 +431,10 @@
                     <h2 class="text-2xl font-bold text-white mb-3">Welcome to Nexus</h2>
                     <p class="text-zinc-500 text-sm max-w-xs">Start a conversation, ask questions, or upload documents for intelligent analysis.</p>
                 </div>
-            {% else %}
+            {% endif %}
+            
+            <!-- Messages container - all messages (existing and new via HTMX) go here -->
+            <div id="messages-container">
                 {% for msg in messages %}
                     <div class="max-w-3xl mx-auto w-full group animate-[fadeIn_0.3s_ease-out_forwards]">
                         {% if msg.role == 'user' %}
@@ -465,8 +468,9 @@
                         {% endif %}
                     </div>
                 {% endfor %}
-            {% endif %}
-
+            </div>
+            
+            <!-- Loading spinner - stays at the bottom of messages container -->
             <div id="loading-spinner" class="htmx-indicator max-w-3xl mx-auto w-full flex gap-4 mt-2 mb-2">
                 <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex-shrink-0 flex items-center justify-center text-white text-xs flex-none shadow-lg shadow-indigo-500/30">
                     <i class="fas fa-bolt text-base"></i>
@@ -485,15 +489,9 @@
         <div class="fixed bottom-0 right-0 lg:right-[280px] bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/95 to-transparent pt-10 pb-6 px-4 z-20" style="left: 260px;">
             <div class="max-w-3xl mx-auto w-full">
 
-                <!-- Service unavailable message -->
-                <div id="service-unavailable-message" class="hidden mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">
-                    <i class="fas fa-exclamation-triangle mr-2"></i>
-                    <span>Service temporarily unavailable. All model rate limits reached. Please try again later.</span>
-                </div>
-
                 <form hx-post="{% url 'chat_session' current_session.id %}"
                       hx-indicator="#loading-spinner" 
-                      hx-target="#chat-container" 
+                      hx-target="#messages-container" 
                       hx-swap="beforeend" 
                       id="chat-form"
                       hx-on::before-request="handleBeforeSend()"
@@ -746,7 +744,6 @@
         const form = document.getElementById('chat-form');
         const textarea = document.getElementById('chat-input-textarea');
         const submitBtn = document.getElementById('chat-submit-btn');
-        const unavailableMsg = document.getElementById('service-unavailable-message');
         
         if (form && textarea && submitBtn) {
             textarea.disabled = true;
@@ -755,31 +752,20 @@
             form.classList.add('opacity-60', 'pointer-events-none');
         }
         
-        if (unavailableMsg) {
-            if (message) {
-                unavailableMsg.querySelector('span').textContent = message;
-            }
-            unavailableMsg.classList.remove('hidden');
-        }
-        
-        showNotification(message || 'Service temporarily unavailable', 'error', 0);
+        // Show notification that auto-dismisses after 8 seconds
+        showNotification(message || 'Service temporarily unavailable. Retrying soon...', 'error', 8000);
     }
 
     function enableChatInterface() {
         const form = document.getElementById('chat-form');
         const textarea = document.getElementById('chat-input-textarea');
         const submitBtn = document.getElementById('chat-submit-btn');
-        const unavailableMsg = document.getElementById('service-unavailable-message');
         
         if (form && textarea && submitBtn) {
             textarea.disabled = false;
             textarea.placeholder = "Message Nexus...";
             submitBtn.disabled = false;
             form.classList.remove('opacity-60', 'pointer-events-none');
-        }
-        
-        if (unavailableMsg) {
-            unavailableMsg.classList.add('hidden');
         }
     }
 
@@ -819,6 +805,12 @@
         
         // Periodically check availability every 60 seconds
         setInterval(checkServiceAvailability, 60000);
+        
+        // Scroll to bottom to show latest messages when chat loads
+        const chatContainer = document.getElementById('chat-container');
+        if (chatContainer) {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
         
         // Auto-focus message input on new chat (when no messages exist)
         const emptyState = document.getElementById('empty-state');
