@@ -179,18 +179,19 @@ CLOUDINARY_STORAGE = {
 # ... keys are above this ...
 # settings.py
 
-# 1. Use the best backend (Compression + Caching)
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        # ✅ SAFE BACKEND: (CompressedStaticFilesStorage)
+        # This compresses files but DOES NOT crash on missing links
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
-# 2. Keep the compatibility shim matching the backend above
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# ✅ MATCHING SAFE BACKEND
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
 # 3. ADD THIS LINE (The Fix from the Docs)
 # This tells WhiteNoise: "If you find a missing file reference (like admin/css/widgets.css),
