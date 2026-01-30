@@ -182,15 +182,15 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        # Use Django's ManifestStaticFilesStorage to avoid whitenoise compression race condition
-        # Whitenoise middleware will still serve the files efficiently
-        "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
+        # Use basic StaticFilesStorage to avoid race conditions in Python 3.14
+        # Whitenoise middleware handles caching headers and compression at runtime
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 
 # 2. REQUIRED COMPATIBILITY FIX
 # Update this fallback to match the backend above
-STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 # --- AUTH REDIRECTS ---
 LOGIN_REDIRECT_URL = '/chat/'  # Go to chat page after login
