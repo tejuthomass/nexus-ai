@@ -176,22 +176,18 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
 }
 
-# ... keys are above this ...
-# settings.py
-
+# ✅ FIXED: Use CompressedStaticFilesStorage (no Manifest) to avoid crashes
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        # ✅ SAFE BACKEND: (CompressedStaticFilesStorage)
-        # This compresses files but DOES NOT crash on missing links
         "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
-# ✅ MATCHING SAFE BACKEND
-STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
+# NOTE: STATICFILES_STORAGE is deprecated in Django 4.2+
+# The STORAGES["staticfiles"] setting above is the correct way
 
 
 # --- AUTH REDIRECTS ---
