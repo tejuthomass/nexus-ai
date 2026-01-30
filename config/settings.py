@@ -193,10 +193,6 @@ STORAGES = {
 # ✅ MATCHING SAFE BACKEND
 STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
-# 3. ADD THIS LINE (The Fix from the Docs)
-# This tells WhiteNoise: "If you find a missing file reference (like admin/css/widgets.css),
-# don't crash the build. Just ignore it and keep going."
-WHITENOISE_MANIFEST_STRICT = False
 
 # --- AUTH REDIRECTS ---
 LOGIN_REDIRECT_URL = '/chat/'  # Go to chat page after login
