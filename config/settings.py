@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import sys  # <--- Added to handle the build fix
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
@@ -29,17 +30,27 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 # Application definition
 
+# Core apps needed for every command
 INSTALLED_APPS = [
     'chat',
-    'cloudinary_storage',
-    'cloudinary',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'whitenoise.runserver_nostatic',
     'django.contrib.staticfiles',
 ]
+
+# AUTOMATIC FIX FOR BUILD FAILURES:
+# Cloudinary conflicts with 'collectstatic' in some environments, causing it 
+# to find 0 files. We check the command running; if it is 'collectstatic',
+# we skip loading Cloudinary so Django can find the files properly.
+if 'collectstatic' not in sys.argv:
+    INSTALLED_APPS.extend([
+        'cloudinary_storage',
+        'cloudinary',
+    ])
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -140,15 +151,13 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
-# Explicitly set staticfiles finders
-STATICFILES_FINDERS = [
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-]
+# Note: STATICFILES_FINDERS is removed to rely on Django defaults, 
+# which ensures Admin files are found correctly.
 
 # Media files
 MEDIA_URL = '/media/'
@@ -169,7 +178,6 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # Load keys from .env (Security Best Practice)
-# We will add these to your .env file in the next step
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
@@ -182,14 +190,13 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        # Use basic StaticFilesStorage to avoid race conditions in Python 3.14
-        # Whitenoise middleware handles caching headers and compression at runtime
+        # Using standard storage to avoid compression race conditions
+        # WhiteNoise middleware will still serve these files
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 
 # 2. REQUIRED COMPATIBILITY FIX
-# Update this fallback to match the backend above
 STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 # --- AUTH REDIRECTS ---
