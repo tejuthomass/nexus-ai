@@ -31,4 +31,8 @@ python manage.py createcachetable
 echo "🔄 Running migrations..."
 python manage.py migrate
 
+# Create superuser from environment variables if not exists
+echo "👤 Setting up superuser..."
+python manage.py create_superuser_if_missing
+
 echo "✅ Build complete!"
