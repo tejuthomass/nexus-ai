@@ -184,6 +184,9 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
 }
 
+# Cloudinary folder path for PDF uploads (configurable via environment variable)
+CLOUDINARY_FOLDER = os.getenv('CLOUDINARY_FOLDER', 'nexus-dev')
+
 # 1. Modern Django 5+ Storage Configuration
 STORAGES = {
     "default": {
@@ -247,38 +250,13 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
 
 # --- CACHE CONFIGURATION (Required for Rate Limiting) ---
-# Production (Render): Use DatabaseCache for multi-worker support (persists across dyno sleep)
-# Redis: If Redis is available, use it instead
-REDIS_URL = os.getenv('REDIS_URL', None)
-
-if REDIS_URL:
-    # PRODUCTION with Redis: Redis cache for multi-worker rate limiting
-    CACHES = {
-        'default': {
-            'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': REDIS_URL,
-            'OPTIONS': {
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                'CONNECTION_POOL_KWARGS': {
-                    'max_connections': 50,
-                    'retry_on_timeout': True,
-                },
-                'SOCKET_CONNECT_TIMEOUT': 5,
-                'SOCKET_TIMEOUT': 5,
-            },
-            'KEY_PREFIX': 'nexus',
-            'TIMEOUT': 300,
+# Uses DatabaseCache stored in NeonDB (shared across Render workers, persists on sleep)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache_table',
+        'OPTIONS': {
+            'MAX_ENTRIES': 10000,
         }
     }
-else:
-    # PRODUCTION (Render free tier): Use DatabaseCache (shared across 4 workers, persists on sleep)
-    # Accurate rate limits across all workers + persistent quotas even after dyno sleep
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-            'LOCATION': 'django_cache_table',
-            'OPTIONS': {
-                'MAX_ENTRIES': 10000,
-            }
-        }
-    }
+}

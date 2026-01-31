@@ -25,13 +25,14 @@ ls -la staticfiles/admin/ || echo "No admin static files"
 ls -la staticfiles/css/ || echo "No css directory in staticfiles"
 ls -la staticfiles/js/ || echo "No js directory in staticfiles"
 
-# Create cache table (required for DatabaseCache)
-echo "🗄️ Creating cache table..."
-python manage.py createcachetable
-
-# Run migrations
+# Run migrations first (required before createcachetable)
 echo "🔄 Running migrations..."
 python manage.py migrate
+
+# Create cache table (required for DatabaseCache)
+# This must run AFTER migrate so Django's database tables exist
+echo "🗄️ Creating cache table..."
+python manage.py createcachetable || echo "Cache table already exists or could not be created"
 
 # Create superuser from environment variables if not exists
 echo "👤 Setting up superuser..."

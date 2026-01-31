@@ -1,16 +1,17 @@
 {% if documents %}
     {% for doc in documents %}
-    <a href="{{ doc.file.url }}" target="_blank" class="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.04] border border-white/8 hover:border-indigo-500/40 hover:bg-indigo-500/8 transition-all duration-300 group shadow-lg hover:shadow-xl hover:shadow-indigo-500/20 transform hover:scale-[1.02]">
-        <i class="fas fa-file-pdf text-indigo-400 text-xl flex-shrink-0 group-hover:scale-110 transition-transform duration-300"></i>
+    <!-- PDF indicator only - no access/download/view links (security: URLs not exposed to users) -->
+    <div class="flex items-center gap-3 p-3.5 rounded-xl bg-white/[0.04] border border-white/8 shadow-lg">
+        <i class="fas fa-file-pdf text-indigo-400 text-xl flex-shrink-0"></i>
         <div class="flex-1 min-w-0">
-            <p class="text-sm text-zinc-300 truncate group-hover:text-white transition-colors duration-200 font-semibold">{{ doc.title }}</p>
+            <p class="text-sm text-zinc-300 truncate font-semibold">{{ doc.title }}</p>
             <p class="text-xs text-zinc-500 mt-1 flex items-center gap-1.5">
                 <i class="far fa-clock"></i>
                 {{ doc.uploaded_at|date:"M d, H:i" }}
             </p>
         </div>
-        <i class="fas fa-download text-zinc-600 group-hover:text-indigo-400 transition-all duration-200 opacity-0 group-hover:opacity-100 transform group-hover:translate-y-0 translate-y-2"></i>
-    </a>
+        <i class="fas fa-check-circle text-emerald-500 text-sm" title="Uploaded successfully"></i>
+    </div>
     {% endfor %}
 {% else %}
     <div class="flex items-center justify-center h-full text-center py-12">

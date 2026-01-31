@@ -8,7 +8,7 @@ Configuration:
 - Supports 10-20 users total
 - Handles 5-10 parallel users simultaneously
 - Optimized for free-tier API constraints (Gemini, Pinecone)
-- Multi-worker safe with Redis atomic operations
+- Uses DatabaseCache stored in NeonDB for multi-worker support
 """
 
 import time
@@ -28,13 +28,6 @@ logger = logging.getLogger(__name__)
 USER_REQUESTS_PER_MINUTE = 10
 USER_REQUESTS_PER_HOUR = 100
 GLOBAL_PARALLEL_LIMIT = 50
-
-# Check if using Redis (for multi-worker support)
-def _is_redis_cache():
-    """Check if Redis cache backend is configured."""
-    cache_backend = settings.CACHES['default']['BACKEND']
-    return 'redis' in cache_backend.lower()
-
 
 # Cache key prefixes
 CACHE_PREFIX_MINUTE = "rate_limit_minute_"
@@ -132,97 +125,60 @@ class RateLimitMiddleware:
     
     def _check_global_limit(self):
         """Check if global parallel request limit is exceeded."""
-        active_requests = cache.get(CACHE_PREFIX_GLOBAL, 0)
-        return active_requests < GLOBAL_PARALLEL_LIMIT
+        try:
+            active_requests = cache.get(CACHE_PREFIX_GLOBAL, 0)
+            return active_requests < GLOBAL_PARALLEL_LIMIT
+        except Exception as e:
+            # If cache is unavailable (e.g., table doesn't exist), allow request
+            logger.warning(f"Cache unavailable in _check_global_limit: {e}")
+            return True
     
     def _increment_global_counter(self):
-        """Increment global active request counter atomically."""
+        """Increment global active request counter."""
         try:
             cache_key = CACHE_PREFIX_GLOBAL
-            if _is_redis_cache():
-                # Redis atomic increment
-                cache.incr(cache_key)
-                cache.expire(cache_key, 60)
-            else:
-                # Fallback for non-Redis (development)
-                current = cache.get(cache_key, 0)
-                cache.set(cache_key, current + 1, timeout=60)
+            current = cache.get(cache_key, 0)
+            cache.set(cache_key, current + 1, timeout=60)
         except Exception as e:
             logger.error(f"Failed to increment global counter: {e}")
     
     def _decrement_global_counter(self):
-        """Decrement global active request counter atomically."""
+        """Decrement global active request counter."""
         try:
             cache_key = CACHE_PREFIX_GLOBAL
-            if _is_redis_cache():
-                # Redis atomic decrement
-                new_value = cache.decr(cache_key)
-                # Prevent negative values
-                if new_value < 0:
-                    cache.set(cache_key, 0, timeout=60)
-            else:
-                # Fallback for non-Redis (development)
-                current = cache.get(cache_key, 0)
-                if current > 0:
-                    cache.set(cache_key, current - 1, timeout=60)
+            current = cache.get(cache_key, 0)
+            if current > 0:
+                cache.set(cache_key, current - 1, timeout=60)
         except Exception as e:
             logger.error(f"Failed to decrement global counter: {e}")
     
     def _check_user_minute_limit(self, user_id):
-        """Check and update per-user minute rate limit atomically."""
+        """Check and update per-user minute rate limit."""
         cache_key = f"{CACHE_PREFIX_MINUTE}{user_id}"
         
-        if _is_redis_cache():
-            # Redis atomic operations
-            try:
-                current_count = cache.get(cache_key, 0)
-                if current_count >= USER_REQUESTS_PER_MINUTE:
-                    return False
-                
-                # Atomic increment
-                cache.incr(cache_key)
-                # Set expiry only if key is new
-                if current_count == 0:
-                    cache.expire(cache_key, 60)
-                return True
-            except Exception as e:
-                logger.error(f"Redis error in minute limit: {e}")
-                return True  # Fail open to not block users
-        else:
-            # Fallback for development
+        try:
             current_count = cache.get(cache_key, 0)
             if current_count >= USER_REQUESTS_PER_MINUTE:
                 return False
             cache.set(cache_key, current_count + 1, timeout=60)
             return True
+        except Exception as e:
+            logger.error(f"Cache error in minute limit: {e}")
+            return True  # Fail open to not block users
     
     def _check_user_hour_limit(self, user_id):
-        """Check and update per-user hourly rate limit atomically."""
+        """Check and update per-user hourly rate limit."""
         cache_key = f"{CACHE_PREFIX_HOUR}{user_id}"
         
-        if _is_redis_cache():
-            # Redis atomic operations
-            try:
-                current_count = cache.get(cache_key, 0)
-                if current_count >= USER_REQUESTS_PER_HOUR:
-                    return False
-                
-                # Atomic increment
-                cache.incr(cache_key)
-                # Set expiry only if key is new
-                if current_count == 0:
-                    cache.expire(cache_key, 3600)
-                return True
-            except Exception as e:
-                logger.error(f"Redis error in hour limit: {e}")
-                return True  # Fail open to not block users
-        else:
-            # Fallback for development
+        try:
             current_count = cache.get(cache_key, 0)
             if current_count >= USER_REQUESTS_PER_HOUR:
                 return False
             cache.set(cache_key, current_count + 1, timeout=3600)
             return True
+        except Exception as e:
+            logger.error(f"Cache error in hour limit: {e}")
+            return True  # Fail open to not block users
     
     def _rate_limit_response(self, message, retry_after=60):
         """Generate a rate limit response."""
@@ -267,32 +223,18 @@ class APIRateLimitMiddleware:
     
     def _check_api_rate_limit(self, user_id):
         """
-        Check API-specific rate limit atomically.
+        Check API-specific rate limit.
         More restrictive than general rate limit.
         Allows 5 AI calls per minute per user.
         """
         cache_key = f"api_rate_limit_{user_id}"
         
-        if _is_redis_cache():
-            # Redis atomic operations
-            try:
-                current_count = cache.get(cache_key, 0)
-                if current_count >= 5:  # 5 AI calls per minute
-                    return False
-                
-                # Atomic increment
-                cache.incr(cache_key)
-                # Set expiry only if key is new
-                if current_count == 0:
-                    cache.expire(cache_key, 60)
-                return True
-            except Exception as e:
-                logger.error(f"Redis error in API limit: {e}")
-                return True  # Fail open to not block users
-        else:
-            # Fallback for development
+        try:
             current_count = cache.get(cache_key, 0)
-            if current_count >= 5:
+            if current_count >= 5:  # 5 AI calls per minute
                 return False
             cache.set(cache_key, current_count + 1, timeout=60)
             return True
+        except Exception as e:
+            logger.error(f"Cache error in API limit: {e}")
+            return True  # Fail open to not block users

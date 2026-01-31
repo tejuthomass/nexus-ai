@@ -90,11 +90,15 @@ def chat_view(request, session_id=None):
             raw_text = extract_text_from_pdf(io.BytesIO(file_content))
             
             # 2. Upload to Cloudinary using the SDK
-            # Use a unique public_id to prevent collisions
+            # Use environment-configured folder and unique public_id to prevent collisions
+            # PDFs must be uploaded as 'raw' resource type for consistent deletion
+            from django.conf import settings
+            folder_path = settings.CLOUDINARY_FOLDER
             unique_public_id = f"session_{current_session.id}_{uploaded_file.name}"
             upload_result = cloudinary.uploader.upload(
                 io.BytesIO(file_content), 
-                resource_type="auto", 
+                resource_type="raw",  # PDFs are raw files, not images
+                folder=folder_path,
                 public_id=unique_public_id
             )
 

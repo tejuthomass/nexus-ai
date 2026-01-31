@@ -489,7 +489,7 @@
         <div class="fixed bottom-0 right-0 lg:right-[280px] bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/95 to-transparent pt-10 pb-6 px-4 z-20" style="left: 260px;">
             <div class="max-w-3xl mx-auto w-full">
 
-                <form hx-post="{% url 'chat_session' current_session.id %}"
+                <form hx-post="{% if current_session.id %}{% url 'chat_session' current_session.id %}{% else %}{% url 'chat' %}{% endif %}"
                       hx-indicator="#loading-spinner" 
                       hx-target="#messages-container" 
                       hx-swap="beforeend" 

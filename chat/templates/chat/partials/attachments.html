@@ -3,10 +3,12 @@
     <div class="text-xs font-medium text-zinc-500 px-3 py-2 mb-1">Attachments</div>
     <div class="space-y-1">
         {% for doc in documents %}
-        <a href="{{ doc.file.url }}" target="_blank" class="flex items-center gap-2 px-3 py-2 text-xs text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg transition">
+        <!-- PDF indicator only - no access/download/view links (security: URLs not exposed to users) -->
+        <div class="flex items-center gap-2 px-3 py-2 text-xs text-zinc-400 rounded-lg">
             <i class="fas fa-file-pdf text-indigo-400"></i>
             <span class="truncate font-light">{{ doc.title }}</span>
-        </a>
+            <i class="fas fa-check-circle text-emerald-500 ml-auto" title="Uploaded"></i>
+        </div>
         {% endfor %}
     </div>
 </div>

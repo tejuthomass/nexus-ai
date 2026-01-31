@@ -10,7 +10,7 @@
     <!-- File Upload Section -->
     <div class="p-3 border-b border-white/5">
         <form id="pdf-upload-form" 
-              hx-post="{% url 'chat_session' session.id %}" 
+              hx-post="{% if session.id %}{% url 'chat_session' session.id %}{% else %}{% url 'chat' %}{% endif %}" 
               hx-encoding="multipart/form-data"
               hx-target="#attachments-list"
               hx-swap="innerHTML"
@@ -48,7 +48,12 @@
                 <span>Max size: 5MB</span>
             </div>
         </form>
+    </div>
 
+    <!-- Attachments List Container -->
+    <div class="flex-1 overflow-y-auto p-3 space-y-2" id="attachments-list">
+        {% include 'chat/partials/attachments_list.html' with documents=documents %}
+    </div>
 </div>
 
 <script>
@@ -121,9 +126,16 @@ function validateAndUploadFile(input) {
     
     // Create FormData and submit
     const formData = new FormData(form);
-    const sessionId = window.location.pathname.split('/')[2];
     
-    fetch('/chat/' + sessionId + '/', {
+    // Get session ID from URL - handle both /chat/ and /chat/{id}/ patterns
+    const pathParts = window.location.pathname.split('/').filter(p => p);
+    // pathParts = ['chat'] or ['chat', '123']
+    const sessionId = pathParts.length > 1 ? pathParts[1] : '';
+    
+    // Build the correct URL - if no session ID, post to /chat/ which will use current session
+    const uploadUrl = sessionId ? '/chat/' + sessionId + '/' : '/chat/';
+    
+    fetch(uploadUrl, {
         method: 'POST',
         body: formData
     })
