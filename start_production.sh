@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Nexus AI - Production Start Script
+# Nexus - Production Start Script
 # Usage: ./start_production.sh [start|stop|restart|status]
 
 set -e
@@ -18,7 +18,7 @@ NC='\033[0m' # No Color
 
 # Function to print colored messages
 print_message() {
-    echo -e "${GREEN}[Nexus AI]${NC} $1"
+    echo -e "${GREEN}[Nexus]${NC} $1"
 }
 
 print_warning() {
@@ -61,7 +61,7 @@ check_redis() {
 
 # Start production server
 start_server() {
-    print_message "Starting Nexus AI in production mode..."
+    print_message "Starting Nexus in production mode..."
     print_message "Configuration:"
     echo "  Workers: $WORKERS"
     echo "  Threads per worker: $THREADS"
@@ -77,7 +77,7 @@ start_server() {
 
 # Stop server
 stop_server() {
-    print_message "Stopping Nexus AI..."
+    print_message "Stopping Nexus..."
     pkill -f "gunicorn.*config.wsgi" || true
     print_message "Server stopped"
 }

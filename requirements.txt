@@ -1,4 +1,4 @@
-# Nexus AI - Production Dependencies
+# Nexus - Production Dependencies
 # Only direct dependencies - pip will resolve transitive deps automatically
 
 # ============================================================================

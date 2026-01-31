@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🔨 Building Nexus AI..."
+echo "🔨 Building Nexus..."
 
 # Install dependencies
 pip install -r requirements.txt

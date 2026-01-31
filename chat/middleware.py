@@ -1,5 +1,5 @@
 """
-Rate Limiting Middleware for Nexus AI
+Rate Limiting Middleware for Nexus
 
 Implements user-level rate limiting to ensure fair resource distribution
 and prevent abuse of free-tier API resources.

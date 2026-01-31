@@ -1,5 +1,5 @@
 """
-Multi-Model Fallback System for Nexus AI
+Multi-Model Fallback System for Nexus
 
 This module implements a production-grade model hierarchy with automatic fallback logic.
 When rate limits or errors occur, it cascades through models from most powerful to lightest.

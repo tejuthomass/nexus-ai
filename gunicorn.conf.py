@@ -1,5 +1,5 @@
 """
-Gunicorn Configuration for Nexus AI Production Deployment
+Gunicorn Configuration for Nexus Production Deployment
 
 This configuration is optimized for:
 - 10-20 total users
@@ -77,17 +77,17 @@ max_requests_jitter = 50
 # Worker lifecycle hooks
 def on_starting(server):
     """Called just before the master process is initialized."""
-    print(f"🚀 Starting Nexus AI server with {workers} workers and {threads} threads per worker")
+    print(f"🚀 Starting Nexus server with {workers} workers and {threads} threads per worker")
     print(f"📊 Expected capacity: 10-20 users, 5-10 concurrent users")
     print(f"🔧 Configuration: {workers} workers x {threads} threads = {workers * threads} concurrent connections")
 
 def on_reload(server):
     """Called to recycle workers during a reload via SIGHUP."""
-    print("🔄 Reloading Nexus AI workers...")
+    print("🔄 Reloading Nexus workers...")
 
 def when_ready(server):
     """Called just after the server is started."""
-    print(f"✅ Nexus AI server is ready at {bind}")
+    print(f"✅ Nexus server is ready at {bind}")
     print(f"🔒 Admin panel: /{os.getenv('ADMIN_URL_PATH', 'admin/')}")
 
 def worker_int(worker):

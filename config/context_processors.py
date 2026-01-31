@@ -1,5 +1,5 @@
 """
-Context processors for Nexus AI
+Context processors for Nexus
 """
 
 import os
