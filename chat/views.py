@@ -115,9 +115,25 @@ def chat_view(request, session_id=None):
             try:
                 ingest_document(file_identifier, raw_text)
             except Exception as ingest_error:
-                # PRODUCTION FIX: Rollback database if Pinecone fails
+                # PRODUCTION FIX: Rollback database and cleanup Cloudinary if Pinecone fails
                 logger.error(f"Pinecone ingestion failed, rolling back document: {ingest_error}")
+                
+                # Store public_id before deleting doc (needed for manual Cloudinary cleanup)
+                cloudinary_public_id = doc.file.name
+                
+                # Delete from database (triggers post_delete signal for Cloudinary cleanup)
                 doc.delete()
+                
+                # Safety net: Manually cleanup Cloudinary in case signal fails
+                try:
+                    cleanup_result = cloudinary.uploader.destroy(cloudinary_public_id, resource_type="raw")
+                    if cleanup_result.get('result') == 'ok':
+                        logger.info(f"Cloudinary rollback cleanup successful: {cloudinary_public_id}")
+                    elif cleanup_result.get('result') == 'not found':
+                        logger.info(f"Cloudinary file already cleaned by signal: {cloudinary_public_id}")
+                except Exception as cleanup_error:
+                    logger.error(f"Cloudinary rollback cleanup failed: {cleanup_error}")
+                
                 delete_document_vectors(file_identifier)  # Cleanup partial vectors
                 raise
             
