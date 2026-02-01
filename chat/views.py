@@ -178,6 +178,25 @@ def chat_view(request, session_id=None):
             # Check if this is the first message (before creating it)
             is_first_message = current_session.messages.count() == 0
             
+            # --- RETRIEVE CONVERSATION HISTORY FOR CONTEXT ---
+            # Get previous messages in this thread for context (limit to last 10 for token efficiency)
+            previous_messages = Message.objects.filter(
+                session=current_session
+            ).order_by('-created_at')[:10]  # Last 10 messages, newest first
+            
+            # Reverse to get chronological order (oldest to newest)
+            previous_messages = list(reversed(previous_messages))
+            
+            # Build conversation history string
+            conversation_history = ""
+            if previous_messages:
+                conversation_history = "\n\n[CONVERSATION HISTORY]\n"
+                for msg in previous_messages:
+                    role_label = "User" if msg.role == "user" else "Nexus"
+                    # Truncate long messages to save tokens
+                    content_preview = msg.content[:500] + "..." if len(msg.content) > 500 else msg.content
+                    conversation_history += f"{role_label}: {content_preview}\n"
+            
             # --- HYBRID INTELLIGENCE LOGIC ---
             has_documents = Document.objects.filter(session=current_session).exists()
             
@@ -195,49 +214,41 @@ def chat_view(request, session_id=None):
                 has_context = context and context.strip()
                 
                 if has_context:
-                    system_instruction = f"""
-                    You are Nexus, a document analysis assistant. You are analyzing these uploaded documents: {doc_names}.
-                    
-                    CRITICAL RULES - YOU MUST FOLLOW THESE EXACTLY:
-                    1. ONLY answer based on the CONTEXT provided below from the user's documents.
-                    2. DO NOT use any external knowledge, assumptions, or information not in the context.
-                    3. If the answer is in the context, cite the specific information from the document.
-                    4. If the question cannot be answered from the context, say: "Based on the document provided, I cannot find information about [topic]. The document contains [brief summary of what IS in the document]."
-                    5. NEVER make assumptions about what the document might contain - only use what's actually in the CONTEXT.
-                    6. The document title might be misleading - focus ONLY on the actual content in CONTEXT.
-                    
-                    DOCUMENT CONTEXT (This is the actual content from the user's uploaded documents):
-                    ---
-                    {context}
-                    ---
-                    
-                    Answer the user's question using ONLY the information above.
-                    """
+                    system_instruction = f"""You are Nexus, an intelligent document analysis assistant.
+
+UPLOADED DOCUMENTS: {doc_names}
+
+INSTRUCTIONS:
+- Answer questions using the DOCUMENT CONTEXT below as your primary source.
+- Use CONVERSATION HISTORY to understand follow-up questions and maintain continuity.
+- If the answer is in the document, cite it. If not found, clearly state that.
+- For questions unrelated to the document (greetings, general knowledge), respond helpfully but note it's not from the document.
+- Be concise, accurate, and helpful.
+
+[DOCUMENT CONTEXT]
+{context}"""
                 else:
                     # Document exists but no context retrieved (possibly indexing issue)
-                    system_instruction = f"""
-                    You are Nexus. The user has uploaded documents ({doc_names}) but I could not retrieve relevant content from them for this query.
-                    
-                    Please inform the user that:
-                    1. Their documents are uploaded but you couldn't find relevant information for their specific question.
-                    2. They should try rephrasing their question or ask about specific topics from their document.
-                    3. If this persists, the document may need to be re-uploaded.
-                    
-                    Do NOT make up information about what the document might contain.
-                    """
+                    system_instruction = f"""You are Nexus. The user uploaded documents ({doc_names}) but no relevant content was found for this query.
+
+INSTRUCTIONS:
+- If asking about the document: suggest rephrasing or asking about specific topics.
+- If general conversation: respond helpfully using conversation history.
+- Never fabricate document content."""
             else:
                 # --- GENERAL MODE (No docs) ---
-                system_instruction = """
-                You are Nexus, a helpful and intelligent assistant. 
-                Engage in normal conversation, answer questions, and assist the user.
-                """
+                system_instruction = """You are Nexus, a knowledgeable and friendly AI assistant.
+
+INSTRUCTIONS:
+- Engage naturally in conversation and answer questions accurately.
+- Use conversation history to understand context and follow-ups.
+- Be helpful, concise, and informative."""
 
             # Generate Response with automatic fallback (BEFORE saving to DB)
-            prompt = f"""
-            {system_instruction}
-            
-            USER QUESTION: {user_message}
-            """
+            prompt = f"""{system_instruction}
+{conversation_history}
+[USER MESSAGE]
+{user_message}"""
             
             # Use multi-model fallback system - this will raise exception if it fails
             ai_text, model_used = generate_with_fallback(prompt, system_instruction="")

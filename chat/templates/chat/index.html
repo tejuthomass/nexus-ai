@@ -501,6 +501,11 @@
                     {% csrf_token %}
                     
                     <div class="flex items-end p-3.5 gap-3">
+                        <!-- Mobile Upload Button - visible only on mobile (hidden on lg screens where sidebar is visible) -->
+                        <label for="mobile-pdf-upload" class="lg:hidden w-10 h-10 flex items-center justify-center flex-shrink-0 text-zinc-400 hover:text-indigo-400 rounded-xl transition-all duration-200 cursor-pointer hover:bg-white/5 active:scale-95" title="Upload PDF">
+                            <i class="fas fa-paperclip text-lg"></i>
+                        </label>
+                        
                         <textarea name="message" rows="1" 
                                   id="chat-input-textarea"
                                   class="flex-1 bg-white/[0.02] border-0 focus:outline-none focus:ring-0 text-zinc-100 placeholder-zinc-500 resize-none py-3 px-4 text-[15px] leading-relaxed rounded-xl transition-all duration-200" 
@@ -513,7 +518,23 @@
                             <i class="fas fa-arrow-up text-sm font-bold"></i>
                         </button>
                     </div>
+                    
+                    <!-- Mobile Upload Input (hidden file input) -->
+                    <input type="file" 
+                           id="mobile-pdf-upload" 
+                           name="mobile_pdf_file" 
+                           accept=".pdf" 
+                           class="hidden"
+                           onchange="handleMobileUpload(this)">
                 </form>
+                
+                <!-- Mobile Upload Indicator -->
+                <div id="mobile-upload-indicator" class="lg:hidden hidden mt-3 p-3 bg-indigo-500/10 border border-indigo-500/30 rounded-xl">
+                    <div class="flex items-center justify-center gap-2 text-sm">
+                        <i class="fas fa-circle-notch fa-spin text-indigo-400"></i>
+                        <span class="text-indigo-300 font-medium">Processing PDF...</span>
+                    </div>
+                </div>
                 
                 <div class="text-center mt-3">
                     <p class="text-xs text-zinc-600 font-medium">Nexus can make mistakes. Always verify important information.</p>
@@ -872,6 +893,127 @@
             }
         }
     });
+
+    // ============================================================================
+    // MOBILE PDF UPLOAD
+    // ============================================================================
+    
+    const MOBILE_MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+    const MOBILE_MAX_FILE_SIZE_MB = 5;
+    
+    function showMobileUploadIndicator() {
+        const indicator = document.getElementById('mobile-upload-indicator');
+        if (indicator) {
+            indicator.classList.remove('hidden');
+        }
+    }
+    
+    function hideMobileUploadIndicator() {
+        const indicator = document.getElementById('mobile-upload-indicator');
+        if (indicator) {
+            indicator.classList.add('hidden');
+        }
+    }
+    
+    function handleMobileUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        // Validate file type
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+            showNotification('Invalid file type. Only PDF files are allowed.', 'error', 5000);
+            input.value = '';
+            return;
+        }
+        
+        // Validate file size
+        if (file.size > MOBILE_MAX_FILE_SIZE_BYTES) {
+            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            showNotification(
+                'File too large! Size: ' + fileSizeMB + 'MB (Max: ' + MOBILE_MAX_FILE_SIZE_MB + 'MB)',
+                'error',
+                6000
+            );
+            input.value = '';
+            return;
+        }
+        
+        // Show upload indicator and disable chat
+        showMobileUploadIndicator();
+        disableChatInputForUpload();
+        
+        // Create FormData
+        const formData = new FormData();
+        formData.append('pdf_file', file);
+        formData.append('csrfmiddlewaretoken', document.getElementById('csrf-token').value);
+        
+        // Get session ID from URL
+        const pathParts = window.location.pathname.split('/').filter(p => p);
+        const sessionId = pathParts.length > 1 ? pathParts[1] : '';
+        const uploadUrl = sessionId ? '/chat/' + sessionId + '/' : '/chat/';
+        
+        fetch(uploadUrl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(html => {
+            // Check if the response indicates an error
+            const isError = html.includes('border-red-500') || 
+                            html.includes('fa-exclamation-triangle') || 
+                            html.includes('Upload failed') ||
+                            html.includes('❌');
+            
+            if (isError) {
+                // Extract error message from the response
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                const errorSpan = tempDiv.querySelector('.font-medium');
+                const errorMessage = errorSpan ? errorSpan.textContent.trim() : 'Upload failed. Please try again.';
+                showNotification(errorMessage, 'error', 6000);
+            } else {
+                // Update the desktop attachments list if visible
+                const listContainer = document.getElementById('attachments-list');
+                if (listContainer) {
+                    listContainer.innerHTML = html;
+                }
+                showNotification('✓ PDF uploaded successfully!', 'success', 4000);
+            }
+        })
+        .catch(error => {
+            console.error('Upload failed:', error);
+            showNotification('Upload failed. Please try again.', 'error', 5000);
+        })
+        .finally(() => {
+            hideMobileUploadIndicator();
+            enableChatInputAfterUpload();
+            input.value = '';
+        });
+    }
+    
+    function disableChatInputForUpload() {
+        const textarea = document.getElementById('chat-input-textarea');
+        const submitBtn = document.getElementById('chat-submit-btn');
+        if (textarea) {
+            textarea.disabled = true;
+            textarea.placeholder = "Processing PDF, please wait...";
+        }
+        if (submitBtn) {
+            submitBtn.disabled = true;
+        }
+    }
+    
+    function enableChatInputAfterUpload() {
+        const textarea = document.getElementById('chat-input-textarea');
+        const submitBtn = document.getElementById('chat-submit-btn');
+        if (textarea) {
+            textarea.disabled = false;
+            textarea.placeholder = "Message Nexus...";
+        }
+        if (submitBtn) {
+            submitBtn.disabled = false;
+        }
+    }
 </script>
 <script src="/static/js/theme.js"></script>
 </body>
