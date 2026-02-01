@@ -61,43 +61,10 @@ class Message(models.Model):
         """
         content = self.content or ""
         
-        # ===== PREPROCESSING TO FIX COMMON MARKDOWN EDGE CASES =====
-        
-        # 1. Fix excessive asterisks (e.g., **** or *** that aren't horizontal rules)
-        content = re.sub(r'\*{4,}', '**', content)
-        
-        # 2. Fix malformed bold: ** text** or **text ** (spaces inside markers)
-        content = re.sub(r'\*\*\s+([^*]+?)\s+\*\*', r'**\1**', content)
-        content = re.sub(r'\*\*\s+([^*]+?)\*\*', r'**\1**', content)
-        content = re.sub(r'\*\*([^*]+?)\s+\*\*', r'**\1**', content)
-        
-        # 3. Fix malformed italic: * text* or *text * 
-        content = re.sub(r'(?<!\*)\*\s+([^*]+?)\s+\*(?!\*)', r'*\1*', content)
-        content = re.sub(r'(?<!\*)\*\s+([^*]+?)\*(?!\*)', r'*\1*', content)
-        content = re.sub(r'(?<!\*)\*([^*]+?)\s+\*(?!\*)', r'*\1*', content)
-        
-        # 4. Fix unclosed backticks for inline code (odd number of backticks)
-        # Count backticks, if odd, escape the last one
-        backtick_count = content.count('`') - content.count('```') * 3
-        if backtick_count % 2 != 0:
-            # Find the last single backtick and escape it
-            content = re.sub(r'`([^`]*)$', r'`\1`', content)
-        
-        # 5. Fix asterisks that are clearly not markdown (e.g., "5 * 3 = 15")
-        # Math expressions: number * number
-        content = re.sub(r'(\d)\s*\*\s*(\d)', r'\1 × \2', content)
-        
-        # 6. Ensure code blocks have proper newlines
-        content = re.sub(r'```(\w+)?([^\n])', r'```\1\n\2', content)
-        content = re.sub(r'([^\n])```', r'\1\n```', content)
-        
-        # 7. Fix bullet points that might have extra asterisks
-        content = re.sub(r'^\*{2,}\s+', '* ', content, flags=re.MULTILINE)
-        
-        # 8. Normalize line endings
+        # Normalize line endings
         content = content.replace('\r\n', '\n').replace('\r', '\n')
         
-        # ===== RENDER MARKDOWN TO HTML =====
+        # Render markdown to HTML
         html_content = markdown.markdown(
             content,
             extensions=[
@@ -112,19 +79,10 @@ class Message(models.Model):
                 'codehilite': {
                     'css_class': 'highlight',
                     'linenums': False,
+                    'guess_lang': True,
                 }
             },
             output_format='html5'
         )
-        
-        # ===== POST-PROCESSING TO CATCH REMAINING ISSUES =====
-        
-        # Fix any remaining raw asterisks that weren't converted
-        # Single asterisks surrounded by spaces (not part of markdown)
-        html_content = re.sub(r'\s\*\s', ' • ', html_content)
-        
-        # Fix any remaining backticks that weren't converted to code
-        # (This catches edge cases the markdown parser missed)
-        html_content = re.sub(r'`([^`<>]+)`', r'<code>\1</code>', html_content)
         
         return html_content
