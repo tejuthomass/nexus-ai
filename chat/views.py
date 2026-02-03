@@ -1,3 +1,19 @@
+"""View functions for the Nexus chat application.
+
+This module contains all view functions for chat functionality including:
+    - Main chat interface with message handling
+    - File upload and document management
+    - Session creation, renaming, and deletion
+    - Admin dashboard and user management
+    - API endpoints for chat data
+
+All chat views require authentication. Admin views require staff status.
+
+Constants:
+    MAX_FILE_SIZE: Maximum allowed file upload size (5MB).
+    ALLOWED_EXTENSIONS: List of allowed file extensions (['.pdf']).
+"""
+
 import os
 import io
 import logging
@@ -26,6 +42,27 @@ ALLOWED_EXTENSIONS = ['.pdf']
 
 @login_required
 def chat_view(request, session_id=None):
+    """Main chat interface view handling messages and file uploads.
+
+    This view handles:
+        - Loading chat sessions and messages
+        - Processing new chat messages with AI response generation
+        - File uploads for RAG-based Q&A
+        - HTMX partial updates for dynamic UI
+
+    The view uses a hybrid intelligence approach:
+        - RAG mode when documents are attached (document-based Q&A)
+        - General mode for open conversation without documents
+
+    Args:
+        request: The HttpRequest object.
+        session_id: Optional ID of a specific chat session to load.
+            If None, loads the most recent session or creates a new one.
+
+    Returns:
+        HttpResponse: The rendered chat interface or partial HTML
+            for HTMX updates.
+    """
     user = request.user
 
     # 1. Logic: Load specific chat OR get the latest one
@@ -335,6 +372,19 @@ INSTRUCTIONS:
 
 @login_required
 def new_chat(request):
+    """Create a new chat session for the user.
+
+    Prevents creation of empty chat sessions by redirecting to the
+    last empty session if one exists. Otherwise creates a new session
+    with default title.
+
+    Args:
+        request: The HttpRequest object.
+
+    Returns:
+        HttpResponseRedirect: Redirects to the new or existing empty
+            chat session.
+    """
     # Logic: Prevent empty chats
     # Check the user's last session
     last_session = ChatSession.objects.filter(user=request.user).order_by('-created_at').first()
@@ -349,6 +399,20 @@ def new_chat(request):
 
 @login_required
 def rename_chat(request, session_id):
+    """Rename a chat session.
+
+    Allows users to rename their chat sessions. Validates that the
+    session has messages (prevents renaming empty sessions) and
+    sanitizes the input title.
+
+    Args:
+        request: The HttpRequest object (must be POST).
+        session_id: The ID of the chat session to rename.
+
+    Returns:
+        HttpResponse: Rendered chat title partial for HTMX swap,
+            or 204 No Content if session is empty.
+    """
     # --- TASK 4: RENAME CHAT LOGIC ---
     if request.method == "POST":
         session = get_object_or_404(ChatSession, id=session_id, user=request.user)
@@ -372,8 +436,20 @@ def rename_chat(request, session_id):
         # Return the new title as simple HTML to swap
         return render(request, 'chat/partials/chat_title.html', {'session': session})
 
-@staff_member_required # <--- Security: Only Admins can enter
+@staff_member_required  # <--- Security: Only Admins can enter
 def admin_dashboard(request):
+    """Display the admin dashboard with user and session statistics.
+
+    Shows all non-superuser accounts with their chat session counts
+    and session details. Staff members can view, manage, and delete
+    users and their sessions.
+
+    Args:
+        request: The HttpRequest object.
+
+    Returns:
+        HttpResponse: The rendered admin dashboard page.
+    """
     # 1. Get all users (exclude the admin themselves to keep list clean)
     users = User.objects.filter(is_superuser=False).order_by('-date_joined')
     
@@ -391,6 +467,19 @@ def admin_dashboard(request):
 
 @staff_member_required
 def delete_user(request, user_id):
+    """Delete a user and all their associated data.
+
+    Admins can delete user accounts. Django's CASCADE ensures all
+    related chat sessions, messages, and documents are also deleted.
+    Signal handlers clean up external resources (Cloudinary, Pinecone).
+
+    Args:
+        request: The HttpRequest object (must be POST).
+        user_id: The ID of the user to delete.
+
+    Returns:
+        HttpResponse: Empty HTML partial to remove the element via HTMX.
+    """
     if request.method == "POST":
         user = get_object_or_404(User, id=user_id)
         user.delete() # This cascades and deletes their chats/files too
@@ -398,6 +487,18 @@ def delete_user(request, user_id):
 
 @staff_member_required
 def delete_chat_session(request, session_id):
+    """Delete any chat session (admin only).
+
+    Allows administrators to delete any chat session regardless of
+    owner. Signal handlers clean up associated resources.
+
+    Args:
+        request: The HttpRequest object (must be POST).
+        session_id: The ID of the chat session to delete.
+
+    Returns:
+        HttpResponse: 200 status on success.
+    """
     if request.method == "POST":
         session = get_object_or_404(ChatSession, id=session_id)
         session.delete()
@@ -405,7 +506,20 @@ def delete_chat_session(request, session_id):
 
 @login_required
 def delete_user_chat_session(request, session_id):
-    """Allow users to delete their own chat sessions"""
+    """Allow users to delete their own chat sessions.
+
+    Users can only delete sessions they own. Empty sessions cannot
+    be deleted (defensive check). After deletion, redirects to the
+    main chat view.
+
+    Args:
+        request: The HttpRequest object (must be POST).
+        session_id: The ID of the chat session to delete.
+
+    Returns:
+        HttpResponse: For HTMX requests, returns redirect header.
+            Otherwise, redirects to chat view.
+    """
     if request.method == "POST":
         session = get_object_or_404(ChatSession, id=session_id, user=request.user)
         
@@ -423,6 +537,18 @@ def delete_user_chat_session(request, session_id):
         
 @staff_member_required
 def view_chat_readonly(request, session_id):
+    """Display a read-only view of a chat session for admins.
+
+    Allows administrators to view the contents of any chat session
+    without the ability to send messages.
+
+    Args:
+        request: The HttpRequest object.
+        session_id: The ID of the chat session to view.
+
+    Returns:
+        HttpResponse: Rendered read-only chat view partial.
+    """
     # Read-Only view for Admins
     session = get_object_or_404(ChatSession, id=session_id)
     messages = Message.objects.filter(session=session).order_by('created_at')
@@ -433,7 +559,23 @@ def view_chat_readonly(request, session_id):
 
 @staff_member_required
 def api_admin_chat(request, session_id):
-    """API endpoint to get chat data for admin modal"""
+    """API endpoint to get chat data for admin modal.
+
+    Returns chat session details including messages and documents
+    as JSON for display in the admin dashboard modal.
+
+    Args:
+        request: The HttpRequest object.
+        session_id: The ID of the chat session to retrieve.
+
+    Returns:
+        JsonResponse: Session data including:
+            - id: Session ID
+            - title: Session title
+            - user: Username of session owner
+            - messages: List of message objects with content and metadata
+            - documents: List of document objects with titles and URLs
+    """
     from django.http import JsonResponse
     
     session = get_object_or_404(ChatSession, id=session_id)
@@ -470,7 +612,19 @@ def api_admin_chat(request, session_id):
 
 @login_required
 def check_availability(request):
-    """API endpoint to check if AI service is available"""
+    """API endpoint to check if AI service is available.
+
+    Checks the current status of the AI model fallback system to
+    determine if responses can be generated.
+
+    Args:
+        request: The HttpRequest object.
+
+    Returns:
+        JsonResponse: Availability status with:
+            - available (bool): Whether the service can accept requests.
+            - message (str): Status message for the user.
+    """
     is_available, message = check_service_availability()
     return JsonResponse({
         'available': is_available,

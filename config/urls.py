@@ -1,3 +1,17 @@
+"""URL configuration for the Nexus Django project.
+
+This module defines the root URL routing for the entire application,
+including the admin panel, authentication, chat functionality, and
+custom error handlers.
+
+Attributes:
+    ADMIN_URL_PATH (str): The URL path for the admin panel,
+        configurable via environment variable.
+    urlpatterns (list): List of URL patterns for the application.
+    handler404 (str): Path to the custom 404 error handler.
+    handler500 (str): Path to the custom 500 error handler.
+"""
+
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings

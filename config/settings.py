@@ -1,3 +1,27 @@
+"""Django settings for the Nexus project.
+
+This module contains all configuration settings for the Django application,
+including database configuration, installed apps, middleware, static files,
+authentication, caching, logging, and third-party service integrations.
+
+Configuration is primarily driven by environment variables to support
+different deployment environments (development, staging, production).
+
+Environment Variables:
+    SECRET_KEY: Django secret key for cryptographic signing.
+    DEBUG: Enable/disable debug mode (default: True).
+    ALLOWED_HOSTS: Comma-separated list of allowed hostnames.
+    DATABASE_URL: PostgreSQL connection URL for production.
+    CLOUDINARY_CLOUD_NAME: Cloudinary cloud name for media storage.
+    CLOUDINARY_API_KEY: Cloudinary API key.
+    CLOUDINARY_API_SECRET: Cloudinary API secret.
+    CLOUDINARY_FOLDER: Cloudinary folder for uploads (default: nexus-dev).
+    ADMIN_URL_PATH: Custom admin panel URL path (default: admin/).
+
+For more information, see:
+    https://docs.djangoproject.com/en/5.2/ref/settings/
+"""
+
 from pathlib import Path
 import os
 import sys  # <--- Added to handle the build fix

@@ -1,14 +1,22 @@
-"""
-Rate Limiting Middleware for Nexus
+"""Rate Limiting Middleware for the Nexus application.
 
-Implements user-level rate limiting to ensure fair resource distribution
-and prevent abuse of free-tier API resources.
+This module implements user-level and API-level rate limiting to ensure
+fair resource distribution and prevent abuse of free-tier API resources.
 
-Configuration:
-- Supports 10-20 users total
-- Handles 5-10 parallel users simultaneously
-- Optimized for free-tier API constraints (Gemini, Pinecone)
-- Uses DatabaseCache stored in NeonDB for multi-worker support
+The middleware supports:
+    - 10-20 users total
+    - 5-10 parallel users simultaneously
+    - Free-tier API constraints (Gemini, Pinecone)
+    - DatabaseCache stored in NeonDB for multi-worker support
+
+Classes:
+    RateLimitMiddleware: General rate limiting for all POST requests.
+    APIRateLimitMiddleware: Additional rate limiting for AI API calls.
+
+Constants:
+    USER_REQUESTS_PER_MINUTE: Maximum requests per minute per user.
+    USER_REQUESTS_PER_HOUR: Maximum requests per hour per user.
+    GLOBAL_PARALLEL_LIMIT: Maximum concurrent requests globally.
 """
 
 import time
@@ -36,19 +44,43 @@ CACHE_PREFIX_GLOBAL = "rate_limit_global_active"
 
 
 class RateLimitMiddleware:
-    """
-    Middleware to enforce rate limits on user requests.
-    
+    """Middleware to enforce rate limits on user requests.
+
     Implements three-tier rate limiting:
-    1. Per-user minute limit (prevents rapid-fire requests)
-    2. Per-user hour limit (prevents long-term abuse)
-    3. Global parallel limit (protects free-tier API quotas)
+        1. Per-user minute limit (prevents rapid-fire requests)
+        2. Per-user hour limit (prevents long-term abuse)
+        3. Global parallel limit (protects free-tier API quotas)
+
+    The middleware only applies to authenticated POST requests on
+    non-exempt paths (excludes static, media, admin, and auth pages).
+
+    Attributes:
+        get_response: The next middleware or view in the chain.
     """
-    
+
     def __init__(self, get_response):
+        """Initialize the RateLimitMiddleware.
+
+        Args:
+            get_response: The next middleware or view callable in the chain.
+        """
         self.get_response = get_response
-    
+
     def __call__(self, request):
+        """Process an incoming request with rate limiting.
+
+        Checks rate limits in order of severity:
+            1. Global parallel limit (most critical)
+            2. Per-user minute limit
+            3. Per-user hour limit
+
+        Args:
+            request: The HttpRequest object.
+
+        Returns:
+            HttpResponse: Either the normal response or a 429 rate limit
+                response if limits are exceeded.
+        """
         # Only apply rate limiting to authenticated chat/API endpoints
         # Skip static files, admin panel, and authentication pages
         if not self._should_rate_limit(request):
@@ -97,7 +129,17 @@ class RateLimitMiddleware:
         return response
     
     def _should_rate_limit(self, request):
-        """Determine if this request should be rate limited."""
+        """Determine if this request should be rate limited.
+
+        Exempts static files, media, admin panel, authentication pages,
+        and all GET requests from rate limiting.
+
+        Args:
+            request: The HttpRequest object.
+
+        Returns:
+            bool: True if the request should be rate limited, False otherwise.
+        """
         import os
         path = request.path
         admin_path = f"/{os.getenv('ADMIN_URL_PATH', 'admin/')}"
@@ -124,7 +166,12 @@ class RateLimitMiddleware:
         return True
     
     def _check_global_limit(self):
-        """Check if global parallel request limit is exceeded."""
+        """Check if global parallel request limit is exceeded.
+
+        Returns:
+            bool: True if under the limit, False if exceeded.
+                Returns True if cache is unavailable to fail open.
+        """
         try:
             active_requests = cache.get(CACHE_PREFIX_GLOBAL, 0)
             return active_requests < GLOBAL_PARALLEL_LIMIT
@@ -134,7 +181,11 @@ class RateLimitMiddleware:
             return True
     
     def _increment_global_counter(self):
-        """Increment global active request counter."""
+        """Increment the global active request counter.
+
+        Increments the counter with a 60-second timeout. Logs errors
+        but does not raise exceptions to avoid blocking requests.
+        """
         try:
             cache_key = CACHE_PREFIX_GLOBAL
             current = cache.get(cache_key, 0)
@@ -143,7 +194,11 @@ class RateLimitMiddleware:
             logger.error(f"Failed to increment global counter: {e}")
     
     def _decrement_global_counter(self):
-        """Decrement global active request counter."""
+        """Decrement the global active request counter.
+
+        Decrements the counter ensuring it doesn't go below zero.
+        Logs errors but does not raise exceptions.
+        """
         try:
             cache_key = CACHE_PREFIX_GLOBAL
             current = cache.get(cache_key, 0)
@@ -153,7 +208,15 @@ class RateLimitMiddleware:
             logger.error(f"Failed to decrement global counter: {e}")
     
     def _check_user_minute_limit(self, user_id):
-        """Check and update per-user minute rate limit."""
+        """Check and update per-user minute rate limit.
+
+        Args:
+            user_id: The ID of the user making the request.
+
+        Returns:
+            bool: True if the request is allowed, False if limit exceeded.
+                Returns True on cache errors to fail open.
+        """
         cache_key = f"{CACHE_PREFIX_MINUTE}{user_id}"
         
         try:
@@ -167,7 +230,15 @@ class RateLimitMiddleware:
             return True  # Fail open to not block users
     
     def _check_user_hour_limit(self, user_id):
-        """Check and update per-user hourly rate limit."""
+        """Check and update per-user hourly rate limit.
+
+        Args:
+            user_id: The ID of the user making the request.
+
+        Returns:
+            bool: True if the request is allowed, False if limit exceeded.
+                Returns True on cache errors to fail open.
+        """
         cache_key = f"{CACHE_PREFIX_HOUR}{user_id}"
         
         try:
@@ -181,7 +252,19 @@ class RateLimitMiddleware:
             return True  # Fail open to not block users
     
     def _rate_limit_response(self, message, retry_after=60):
-        """Generate a rate limit response."""
+        """Generate a rate limit response.
+
+        Creates a JSON response with rate limit error details and
+        sets the Retry-After header.
+
+        Args:
+            message: The user-friendly error message to display.
+            retry_after: Seconds until the client should retry.
+                Defaults to 60.
+
+        Returns:
+            JsonResponse: A 429 status response with error details.
+        """
         # Check if this is an HTMX request
         is_htmx = 'HX-Request' in self.get_response.__self__.META if hasattr(self.get_response, '__self__') else False
         
@@ -198,17 +281,37 @@ class RateLimitMiddleware:
 
 
 class APIRateLimitMiddleware:
+    """Additional rate limiting specifically for AI API calls.
+
+    This middleware provides an extra layer of protection for expensive
+    AI API operations beyond the general request rate limiting. It limits
+    users to 5 AI calls per minute.
+
+    Attributes:
+        get_response: The next middleware or view in the chain.
     """
-    Additional rate limiting specifically for AI API calls.
-    
-    This provides an extra layer of protection for expensive API operations
-    beyond the general request rate limiting.
-    """
-    
+
     def __init__(self, get_response):
+        """Initialize the APIRateLimitMiddleware.
+
+        Args:
+            get_response: The next middleware or view callable in the chain.
+        """
         self.get_response = get_response
-    
+
     def __call__(self, request):
+        """Process an incoming request with API-specific rate limiting.
+
+        Only applies to POST requests on chat endpoints that contain
+        a message parameter.
+
+        Args:
+            request: The HttpRequest object.
+
+        Returns:
+            HttpResponse: Either the normal response or a 429 rate limit
+                response if the AI API limit is exceeded.
+        """
         # Only apply to chat message endpoints
         if request.method == 'POST' and '/chat/' in request.path and request.POST.get('message'):
             if not self._check_api_rate_limit(request.user.id):
@@ -222,10 +325,17 @@ class APIRateLimitMiddleware:
         return self.get_response(request)
     
     def _check_api_rate_limit(self, user_id):
-        """
-        Check API-specific rate limit.
-        More restrictive than general rate limit.
-        Allows 5 AI calls per minute per user.
+        """Check API-specific rate limit for a user.
+
+        More restrictive than general rate limiting, allowing only
+        5 AI calls per minute per user.
+
+        Args:
+            user_id: The ID of the user making the request.
+
+        Returns:
+            bool: True if the request is allowed, False if limit exceeded.
+                Returns True on cache errors to fail open.
         """
         cache_key = f"api_rate_limit_{user_id}"
         

@@ -1,8 +1,31 @@
-"""
-Multi-Model Fallback System for Nexus
+"""Multi-Model Fallback System for the Nexus application.
 
-This module implements a production-grade model hierarchy with automatic fallback logic.
-When rate limits or errors occur, it cascades through models from most powerful to lightest.
+This module implements a production-grade model hierarchy with automatic
+fallback logic. When rate limits or errors occur, it cascades through
+models from most powerful to lightest.
+
+The fallback system supports:
+    - 12 AI models from Gemini 3 Flash to Gemma 3 1B
+    - Automatic retry with exponential backoff
+    - Global exhaustion tracking with automatic reset
+    - Graceful error handling and logging
+
+Classes:
+    ModelExhaustionError: Exception raised when all models are exhausted.
+
+Functions:
+    reset_exhaustion_if_needed: Reset exhaustion flag after timeout.
+    is_rate_limit_error: Check if an error indicates rate limiting.
+    is_fallback_error: Check if an error should trigger model fallback.
+    generate_with_fallback: Generate AI response with automatic fallback.
+    get_model_display_name: Convert model ID to user-friendly name.
+    check_service_availability: Check if AI service is available.
+
+Constants:
+    MODEL_HIERARCHY: Ordered list of models from most to least powerful.
+    EXHAUSTION_RESET_TIME: Seconds before resetting exhaustion status.
+    MAX_RETRIES_PER_MODEL: Number of retries per model.
+    INITIAL_RETRY_DELAY: Base delay for exponential backoff.
 """
 
 import os
@@ -42,12 +65,24 @@ INITIAL_RETRY_DELAY = 0.5  # seconds
 
 
 class ModelExhaustionError(Exception):
-    """Raised when all models in the hierarchy have been exhausted."""
+    """Exception raised when all models in the hierarchy have been exhausted.
+
+    This exception is raised when every model in the MODEL_HIERARCHY has
+    failed due to rate limits or other recoverable errors, indicating
+    the service is temporarily unavailable.
+    """
     pass
 
 
 def reset_exhaustion_if_needed():
-    """Reset the exhaustion flag if enough time has passed."""
+    """Reset the model exhaustion flag if enough time has passed.
+
+    Checks if EXHAUSTION_RESET_TIME seconds have elapsed since all
+    models were marked as exhausted. If so, resets the global flags
+    to allow new requests to try the model hierarchy again.
+
+    This enables automatic recovery after rate limit windows expire.
+    """
     global _all_models_exhausted, _exhaustion_timestamp
     
     if _all_models_exhausted and _exhaustion_timestamp:
@@ -59,7 +94,18 @@ def reset_exhaustion_if_needed():
 
 
 def is_rate_limit_error(error_str):
-    """Check if an error is a rate limit or transient error."""
+    """Check if an error string indicates a rate limit or transient error.
+
+    Examines the error message for common rate limit and temporary
+    unavailability indicators.
+
+    Args:
+        error_str: The error message string to check.
+
+    Returns:
+        bool: True if the error indicates rate limiting or temporary
+            unavailability, False otherwise.
+    """
     error_lower = error_str.lower()
     return any(keyword in error_lower for keyword in [
         '429',
@@ -73,7 +119,19 @@ def is_rate_limit_error(error_str):
 
 
 def is_fallback_error(error_str):
-    """Check if an error should trigger fallback to next model."""
+    """Check if an error should trigger fallback to the next model.
+
+    Determines if an error is recoverable and should cause the system
+    to try the next model in the hierarchy. This includes rate limits,
+    model not found errors, and temporary unavailability.
+
+    Args:
+        error_str: The error message string to check.
+
+    Returns:
+        bool: True if the error should trigger fallback to the next
+            model, False for non-recoverable errors.
+    """
     error_lower = error_str.lower()
     return any(keyword in error_lower for keyword in [
         '404',
@@ -92,19 +150,29 @@ def is_fallback_error(error_str):
 
 
 def generate_with_fallback(prompt, system_instruction=""):
-    """
-    Generate AI response with automatic model fallback.
-    
+    """Generate an AI response with automatic model fallback.
+
+    Attempts to generate a response using models in the hierarchy,
+    starting from the most powerful. If a model fails due to rate
+    limits or unavailability, automatically falls back to the next
+    model in the hierarchy.
+
     Args:
-        prompt: The user's prompt/question
-        system_instruction: Optional system instruction for context
-        
+        prompt: The user's prompt or question to send to the AI.
+        system_instruction: Optional system instruction for context.
+            Defaults to an empty string.
+
     Returns:
-        tuple: (response_text, model_used)
-        
+        tuple: A tuple of (response_text, model_used) where:
+            - response_text (str): The generated AI response.
+            - model_used (str): The internal name of the model that
+                successfully generated the response.
+
     Raises:
-        ModelExhaustionError: If all models are exhausted
-        Exception: For non-recoverable errors
+        ModelExhaustionError: If all models in the hierarchy fail due
+            to rate limits or temporary unavailability.
+        Exception: For non-recoverable errors such as API key issues
+            or authentication failures.
     """
     global _all_models_exhausted, _exhaustion_timestamp
     
@@ -191,14 +259,17 @@ def generate_with_fallback(prompt, system_instruction=""):
 
 
 def get_model_display_name(model_name):
-    """
-    Convert internal model name to user-friendly display name.
-    
+    """Convert an internal model name to a user-friendly display name.
+
+    Translates technical model identifiers into human-readable names
+    for display in the user interface.
+
     Args:
-        model_name: Internal model identifier
-        
+        model_name: The internal model identifier (e.g., 'gemini-2.5-flash').
+
     Returns:
-        str: User-friendly model name
+        str: The user-friendly display name (e.g., 'Gemini 2.5 Flash').
+            Returns the original model_name if no mapping exists.
     """
     name_map = {
         "gemini-3-flash-preview": "Gemini 3 Flash",
@@ -218,11 +289,16 @@ def get_model_display_name(model_name):
 
 
 def check_service_availability():
-    """
-    Check if the AI service is currently available.
-    
+    """Check if the AI service is currently available.
+
+    Checks the global model exhaustion status to determine if AI
+    responses can be generated. Automatically resets exhaustion
+    status if enough time has passed.
+
     Returns:
-        tuple: (is_available: bool, message: str)
+        tuple: A tuple of (is_available, message) where:
+            - is_available (bool): True if service can accept requests.
+            - message (str): Status message describing availability.
     """
     reset_exhaustion_if_needed()
     

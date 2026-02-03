@@ -1,14 +1,30 @@
-"""
-Gunicorn Configuration for Nexus Production Deployment
+"""Gunicorn configuration for Nexus production deployment.
 
-This configuration is optimized for:
-- 10-20 total users
-- 5-10 concurrent users
-- Efficient API waiting time handling
-- Multi-worker rate limiting support
+This module configures Gunicorn WSGI server settings optimized for:
+    - 10-20 total users
+    - 5-10 concurrent users
+    - Efficient handling of AI API waiting time
+    - Multi-worker rate limiting support
+
+The configuration uses sync workers with threading to efficiently
+handle I/O-bound AI API calls while maintaining compatibility.
+
+Environment Variables:
+    PORT: Server port (default: 8000).
+    WEB_CONCURRENCY: Number of worker processes.
+    THREADS_PER_WORKER: Threads per worker (default: 4).
+    LOG_LEVEL: Logging level (default: info).
+    ADMIN_URL_PATH: Admin panel path for display.
 
 Usage:
     gunicorn -c gunicorn.conf.py config.wsgi:application
+
+Functions:
+    on_starting: Called before master process initialization.
+    on_reload: Called during worker reload via SIGHUP.
+    when_ready: Called after server starts.
+    worker_int: Called when worker receives SIGINT/SIGQUIT.
+    worker_abort: Called when worker receives SIGABRT.
 """
 
 import multiprocessing
@@ -76,26 +92,64 @@ max_requests_jitter = 50
 
 # Worker lifecycle hooks
 def on_starting(server):
-    """Called just before the master process is initialized."""
+    """Handle server startup initialization.
+
+    Called just before the master process is initialized. Logs
+    configuration details including worker count and expected capacity.
+
+    Args:
+        server: The Arbiter instance managing the workers.
+    """
     print(f"🚀 Starting Nexus server with {workers} workers and {threads} threads per worker")
     print(f"📊 Expected capacity: 10-20 users, 5-10 concurrent users")
     print(f"🔧 Configuration: {workers} workers x {threads} threads = {workers * threads} concurrent connections")
 
+
 def on_reload(server):
-    """Called to recycle workers during a reload via SIGHUP."""
+    """Handle worker reload signal.
+
+    Called to recycle workers during a reload via SIGHUP.
+
+    Args:
+        server: The Arbiter instance managing the workers.
+    """
     print("🔄 Reloading Nexus workers...")
 
+
 def when_ready(server):
-    """Called just after the server is started."""
+    """Handle server ready state.
+
+    Called just after the server is started and ready to accept
+    connections. Logs the bind address and admin panel location.
+
+    Args:
+        server: The Arbiter instance managing the workers.
+    """
     print(f"✅ Nexus server is ready at {bind}")
     print(f"🔒 Admin panel: /{os.getenv('ADMIN_URL_PATH', 'admin/')}")
 
+
 def worker_int(worker):
-    """Called when a worker receives the SIGINT or SIGQUIT signal."""
+    """Handle worker interrupt signal.
+
+    Called when a worker receives the SIGINT or SIGQUIT signal.
+    Logs the worker PID for debugging.
+
+    Args:
+        worker: The Worker instance that received the signal.
+    """
     print(f"⚠️  Worker {worker.pid} received interrupt signal")
 
+
 def worker_abort(worker):
-    """Called when a worker receives the SIGABRT signal."""
+    """Handle worker abort signal.
+
+    Called when a worker receives the SIGABRT signal, indicating
+    an abnormal termination.
+
+    Args:
+        worker: The Worker instance that received the signal.
+    """
     print(f"❌ Worker {worker.pid} aborted")
 
 # Capacity explanation:

@@ -1,3 +1,26 @@
+"""Retrieval-Augmented Generation (RAG) module for Nexus.
+
+This module implements document-based question answering using a RAG
+architecture. Documents are chunked, embedded using Gemini embeddings,
+and stored in Pinecone for semantic retrieval.
+
+The RAG pipeline:
+    1. Extract text from uploaded PDF documents
+    2. Chunk text into overlapping segments
+    3. Generate embeddings using Gemini embedding model
+    4. Store vectors in Pinecone with session metadata
+    5. Retrieve relevant context for user queries
+    6. Clean up vectors when sessions/documents are deleted
+
+Functions:
+    get_clients: Initialize and return API clients.
+    extract_text_from_pdf: Extract text content from a PDF file.
+    ingest_document: Process and store document embeddings.
+    retrieve_context: Retrieve relevant context for a query.
+    delete_session_vectors: Delete all vectors for a session.
+    delete_document_vectors: Delete vectors for a specific document.
+"""
+
 import os
 import logging
 from google import genai
@@ -10,6 +33,20 @@ logger = logging.getLogger(__name__)
 
 # 1. Initialize Clients
 def get_clients():
+    """Initialize and return Google GenAI and Pinecone clients.
+
+    Creates authenticated clients for the Gemini API and Pinecone
+    vector database using environment variables.
+
+    Returns:
+        tuple: A tuple of (google_client, pinecone_index) where:
+            - google_client: Authenticated genai.Client for embeddings.
+            - pinecone_index: Connected Pinecone index for vector operations.
+
+    Raises:
+        Exception: If client initialization fails due to missing
+            credentials or connection issues.
+    """
     try:
         google_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
         pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
@@ -22,6 +59,22 @@ def get_clients():
 
 # 2. PDF Processor (Updated for Cloud)
 def extract_text_from_pdf(pdf_file):
+    """Extract text content from a PDF file.
+
+    Reads all pages from a PDF document and concatenates the
+    extracted text. Supports both file paths and file-like objects.
+
+    Args:
+        pdf_file: A file path string or file-like object (BytesIO)
+            containing the PDF data.
+
+    Returns:
+        str: The extracted text content from all pages.
+
+    Raises:
+        ValueError: If the PDF contains no extractable text or
+            if text extraction fails for any reason.
+    """
     try:
         # Pass the file object directly to PdfReader
         reader = PdfReader(pdf_file)
@@ -37,6 +90,31 @@ def extract_text_from_pdf(pdf_file):
 
 # 3. Ingest (Save Session ID in Metadata)
 def ingest_document(file_identifier, text_content):
+    """Process and store document embeddings in the vector database.
+
+    Chunks the document text, generates embeddings using Gemini,
+    and upserts the vectors to Pinecone with session metadata for
+    filtering during retrieval.
+
+    The chunking strategy uses:
+        - 800 character chunks for precision
+        - 100 character overlap for context continuity
+        - Batch embedding for API efficiency
+        - Batch upsert for Pinecone size limits
+
+    Args:
+        file_identifier: Unique identifier in format 'SESSIONID_FILENAME'
+            (e.g., '15_Resume.pdf'). The session ID is extracted for
+            metadata filtering.
+        text_content: The full text content to be chunked and embedded.
+
+    Returns:
+        int: The number of vectors successfully created and stored.
+
+    Raises:
+        ValueError: If no text chunks could be processed.
+        Exception: If embedding or upsert operations fail.
+    """
     # file_identifier format: "SESSIONID_FILENAME" (e.g., "15_Resume.pdf")
     # We need to extract the session_id to save it as metadata for filtering later.
     try:
@@ -123,6 +201,20 @@ def ingest_document(file_identifier, text_content):
 
 # 4. Retrieve (Filter by Session ID)
 def retrieve_context(query, session_id=None):
+    """Retrieve relevant document context for a user query.
+
+    Embeds the query using Gemini, searches Pinecone for similar
+    vectors, and returns the matched text chunks as context.
+
+    Args:
+        query: The user's question or search query.
+        session_id: Optional session ID to filter results. If provided,
+            only vectors from this session are searched. Defaults to None.
+
+    Returns:
+        str: Concatenated text from the top matching chunks, or an
+            empty string if no matches found or retrieval fails.
+    """
     try:
         google_client, index = get_clients()
 
@@ -161,16 +253,20 @@ def retrieve_context(query, session_id=None):
 
 # 5. Delete Vectors (The Cleaner) - Enhanced with retry logic
 def delete_session_vectors(session_id, max_retries=3):
-    """
-    Delete all vectors for a session with retry logic for reliability.
-    Ensures orphaned vectors don't accumulate even when API calls fail.
-    
+    """Delete all vectors for a session with retry logic.
+
+    Removes all vectors associated with a session ID from Pinecone.
+    Uses exponential backoff for reliability when API calls fail.
+    Ensures orphaned vectors don't accumulate even when transient
+    errors occur.
+
     Args:
-        session_id: ID of the session to clean
-        max_retries: Number of retry attempts (default: 3)
-    
+        session_id: The ID of the session whose vectors should be deleted.
+        max_retries: Maximum number of retry attempts. Defaults to 3.
+
     Returns:
-        bool: True if deletion succeeded, False otherwise
+        bool: True if deletion succeeded, False if all retries failed.
+            Logs a critical error on complete failure for manual cleanup.
     """
     import time
     
@@ -201,15 +297,20 @@ def delete_session_vectors(session_id, max_retries=3):
 
 # 6. Delete Vectors for Specific Document (For Failed Uploads) - Enhanced with retry logic
 def delete_document_vectors(file_identifier, max_retries=3):
-    """
-    Delete vectors for a specific document with retry logic.
-    
+    """Delete vectors for a specific document with retry logic.
+
+    Removes all vectors associated with a file identifier from Pinecone.
+    Typically used to clean up partial uploads when ingestion fails.
+    Uses exponential backoff for reliability.
+
     Args:
-        file_identifier: Identifier of the document to clean
-        max_retries: Number of retry attempts (default: 3)
-    
+        file_identifier: The unique identifier of the document whose
+            vectors should be deleted.
+        max_retries: Maximum number of retry attempts. Defaults to 3.
+
     Returns:
-        bool: True if deletion succeeded, False otherwise
+        bool: True if deletion succeeded, False if all retries failed.
+            Logs a critical error on complete failure.
     """
     import time
     

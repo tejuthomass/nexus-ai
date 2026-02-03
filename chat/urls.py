@@ -1,3 +1,25 @@
+"""URL configuration for the chat application.
+
+This module defines URL patterns for chat-related functionality including:
+    - Main chat interface and session management
+    - Document uploads and chat message handling
+    - Admin dashboard for user and session management
+    - API endpoints for chat data and service availability
+
+URL Patterns:
+    '' : Main chat view (redirects to latest session)
+    '<session_id>/' : View specific chat session
+    'new/' : Create a new chat session
+    '<session_id>/delete/' : Delete a user's chat session
+    '<session_id>/rename/' : Rename a chat session
+    'dashboard/' : Admin dashboard
+    'dashboard/user/<user_id>/delete/' : Delete a user (admin)
+    'dashboard/chat/<session_id>/delete/' : Delete any session (admin)
+    'dashboard/chat/<session_id>/view/' : View session read-only (admin)
+    'api/admin-chat/<session_id>/' : Get chat data as JSON (admin)
+    'api/check-availability/' : Check AI service availability
+"""
+
 from django.urls import path
 from . import views
 

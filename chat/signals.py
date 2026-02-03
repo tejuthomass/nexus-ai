@@ -1,3 +1,21 @@
+"""Django signals for chat model cleanup operations.
+
+This module registers signal handlers to perform cleanup when chat
+models are deleted. It ensures associated resources (Cloudinary files,
+Pinecone vectors) are properly cleaned up to prevent orphaned data.
+
+Signal Handlers:
+    cleanup_user_data: Pre-delete handler for User model.
+    cleanup_session_data: Pre-delete handler for ChatSession model.
+    cleanup_document_file: Post-delete handler for Document model.
+    cleanup_message_data: Post-delete handler for Message model.
+
+The cleanup cascade:
+    User deletion → Session cleanup (vectors) → Document cleanup (Cloudinary)
+    Session deletion → Document cleanup (via CASCADE) → Vector cleanup
+    Document deletion → Cloudinary file cleanup
+"""
+
 from django.db.models.signals import post_delete, pre_delete
 from django.dispatch import receiver
 from django.contrib.auth.models import User
@@ -11,11 +29,17 @@ logger = logging.getLogger(__name__)
 # 0. Trigger when a USER is deleted - cleanup all user's PDFs from Cloudinary
 @receiver(pre_delete, sender=User)
 def cleanup_user_data(sender, instance, **kwargs):
-    """
-    When admin deletes a user, ensure all their PDFs are deleted from Cloudinary.
-    Django CASCADE will handle the database cleanup, and Document post_delete
-    signals will handle Cloudinary file deletion automatically.
-    We just need to clean Pinecone vectors here before cascade happens.
+    """Clean up all user data before user deletion.
+
+    This pre-delete signal handler runs before Django's CASCADE delete.
+    It cleans up Pinecone vectors for all user sessions. Cloudinary
+    file cleanup is handled automatically by Document post_delete signals
+    when CASCADE deletes the documents.
+
+    Args:
+        sender: The model class (User).
+        instance: The User instance being deleted.
+        **kwargs: Additional keyword arguments from the signal.
     """
     logger.info(f"🗑️ Preparing to delete user '{instance.username}' and all associated data")
     
@@ -42,6 +66,18 @@ def cleanup_user_data(sender, instance, **kwargs):
 # 1. Trigger when a SESSION is deleted - handles cascade cleanup with retry logic
 @receiver(pre_delete, sender=ChatSession)
 def cleanup_session_data(sender, instance, **kwargs):
+    """Clean up session data before session deletion.
+
+    Deletes Pinecone vectors associated with the session. Document
+    cleanup is handled by Django CASCADE triggering Document post_delete
+    signals. Logs warnings if vector cleanup fails but does not block
+    session deletion.
+
+    Args:
+        sender: The model class (ChatSession).
+        instance: The ChatSession instance being deleted.
+        **kwargs: Additional keyword arguments from the signal.
+    """
     logger.info(f"🗑️ Preparing to delete session '{instance.title}' (ID: {instance.id})")
     
     # Count documents for logging (actual deletion happens via CASCADE + Document signal)
@@ -71,6 +107,17 @@ def cleanup_session_data(sender, instance, **kwargs):
 # 2. Trigger when a DOCUMENT is deleted
 @receiver(post_delete, sender=Document)
 def cleanup_document_file(sender, instance, **kwargs):
+    """Clean up Cloudinary file after document deletion.
+
+    Deletes the associated file from Cloudinary storage. Uses retry
+    logic with up to 3 attempts for reliability. PDFs are stored as
+    'raw' resource type in Cloudinary.
+
+    Args:
+        sender: The model class (Document).
+        instance: The Document instance that was deleted.
+        **kwargs: Additional keyword arguments from the signal.
+    """
     logger.info(f"☁️ Cleaning up document: {instance.title}")
     
     # Clean Cloudinary File with retry logic
@@ -99,4 +146,14 @@ def cleanup_document_file(sender, instance, **kwargs):
 # 3. Trigger when MESSAGES are deleted (cascade from session deletion)
 @receiver(post_delete, sender=Message)
 def cleanup_message_data(sender, instance, **kwargs):
+    """Log message deletion for debugging purposes.
+
+    Currently only logs the deletion. Messages have no external
+    resources to clean up.
+
+    Args:
+        sender: The model class (Message).
+        instance: The Message instance that was deleted.
+        **kwargs: Additional keyword arguments from the signal.
+    """
     logger.debug(f"Message deleted: {instance.id} from session {instance.session_id}")
