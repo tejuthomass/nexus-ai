@@ -140,7 +140,7 @@ def chat_view(request, session_id=None):
                 request,
                 "chat/partials/system_message.html",
                 {
-                    "content": f"❌ Invalid file type. Only PDF files are allowed.",
+                    "content": "❌ Invalid file type. Only PDF files are allowed.",
                     "error": True,
                 },
             )
@@ -251,7 +251,7 @@ def chat_view(request, session_id=None):
             return render(
                 request,
                 "chat/partials/system_message.html",
-                {"content": f"❌ Upload failed. Please try again.", "error": True},
+                {"content": "❌ Upload failed. Please try again.", "error": True},
             )
 
     # 4. Handle Chat Messages
@@ -631,9 +631,7 @@ def delete_user_chat_session(request, session_id):
             return HttpResponse(status=204)  # No content, just ignore the request
 
         session.delete()
-        logger.info(
-            "User %s deleted chat session %s", request.user.id, session_id
-        )
+        logger.info("User %s deleted chat session %s", request.user.id, session_id)
         # For HTMX requests, return a client-side redirect to root (not /chat/)
         if request.headers.get("HX-Request"):
             return HttpResponse(status=200, headers={"HX-Redirect": "/"})

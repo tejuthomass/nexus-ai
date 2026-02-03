@@ -122,7 +122,7 @@ def ingest_document(file_identifier, text_content):
     # We need to extract the session_id to save it as metadata for filtering later.
     try:
         session_id = file_identifier.split("_")[0]  # Grab "15" from "15_Resume.pdf"
-    except:
+    except (IndexError, ValueError):
         session_id = "global"
 
     try:
@@ -297,7 +297,7 @@ def delete_session_vectors(session_id, max_retries=3):
 
     for attempt in range(max_retries):
         try:
-            google_client, index = get_clients()
+            _, index = get_clients()
             # Delete all vectors where metadata['session_id'] matches
             index.delete(filter={"session_id": {"$eq": str(session_id)}})
             logger.info(
@@ -355,7 +355,7 @@ def delete_document_vectors(file_identifier, max_retries=3):
 
     for attempt in range(max_retries):
         try:
-            google_client, index = get_clients()
+            _, index = get_clients()
             # Delete all vectors where source matches the file_identifier
             index.delete(filter={"source": {"$eq": file_identifier}})
             logger.info(

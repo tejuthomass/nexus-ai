@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In - Nexus</title>
+    <title>Sign Up - Nexus</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -57,6 +57,7 @@
         
         /* Ensure input text is visible */
         input[type="text"],
+        input[type="email"],
         input[type="password"] {
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
@@ -65,6 +66,7 @@
         }
         
         input[type="text"]:focus,
+        input[type="email"]:focus,
         input[type="password"]:focus {
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
@@ -129,7 +131,7 @@
         </a>
     </div>
     
-    <!-- Login Card -->
+    <!-- Signup Card -->
     <div class="w-full max-w-md relative z-10 animate-fade-in-up">
         
         <!-- Logo Section -->
@@ -140,24 +142,37 @@
             <h1 class="text-3xl font-bold text-white mb-2 tracking-tight">
                 Nexus
             </h1>
-            <p class="text-zinc-400 text-sm">Sign in to your account</p>
+            <p class="text-zinc-400 text-sm">Create your account</p>
         </div>
         
-        <!-- Login Form Card -->
+        <!-- Signup Form Card -->
         <div class="p-8 bg-gradient-to-br from-white/6 to-white/2 rounded-2xl shadow-2xl border border-white/8 backdrop-blur-xl">
             
             <form method="POST" class="space-y-5">
                 {% csrf_token %}
                 
-                <!-- Error Message -->
-                {% if form.errors %}
+                <!-- Error Messages -->
+                {% if error %}
                 <div class="p-4 bg-red-500/10 border border-red-500/25 rounded-xl animate-fade-in">
                     <div class="flex items-center justify-center gap-3 text-red-400">
                         <i class="fas fa-circle-exclamation text-lg"></i>
-                        <span class="text-sm font-medium">Invalid credentials</span>
+                        <span class="text-sm font-medium">{{ error }}</span>
                     </div>
                 </div>
                 {% endif %}
+                
+                {% if signup_disabled %}
+                <!-- Signup Disabled Message -->
+                <div class="p-4 bg-amber-500/10 border border-amber-500/25 rounded-xl animate-fade-in">
+                    <div class="flex items-center justify-center gap-3 text-amber-400">
+                        <i class="fas fa-lock text-lg"></i>
+                        <span class="text-sm font-medium">Signup is currently disabled</span>
+                    </div>
+                    <p class="text-xs text-zinc-500 mt-2 text-center">
+                        Contact your administrator for access
+                    </p>
+                </div>
+                {% else %}
 
                 <!-- Username Field -->
                 <div class="space-y-2">
@@ -168,8 +183,22 @@
                            name="username" 
                            required 
                            autofocus
+                           value="{{ form_data.username|default:'' }}"
                            class="w-full px-4 py-3.5 bg-white/4 border border-white/8 rounded-xl focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 text-white placeholder-zinc-500 transition-all outline-none input-glow hover:bg-white/6"
-                           placeholder="Enter your username">
+                           placeholder="Choose a username">
+                </div>
+                
+                <!-- Email Field -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-zinc-300 ml-1">
+                        <i class="fas fa-envelope mr-2 text-zinc-500"></i>Email
+                    </label>
+                    <input type="email" 
+                           name="email" 
+                           required 
+                           value="{{ form_data.email|default:'' }}"
+                           class="w-full px-4 py-3.5 bg-white/4 border border-white/8 rounded-xl focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 text-white placeholder-zinc-500 transition-all outline-none input-glow hover:bg-white/6"
+                           placeholder="Enter your email">
                 </div>
                 
                 <!-- Password Field -->
@@ -183,38 +212,75 @@
                                required
                                id="password-input"
                                class="w-full px-4 py-3.5 bg-white/4 border border-white/8 rounded-xl focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 text-white placeholder-zinc-500 transition-all outline-none input-glow hover:bg-white/6 pr-12"
-                               placeholder="Enter your password">
+                               placeholder="Create a password">
                         <button type="button"
-                                onclick="togglePassword()"
+                                onclick="togglePassword('password-input', 'eye-icon-1')"
                                 class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors p-2">
-                            <i class="fas fa-eye" id="eye-icon"></i>
+                            <i class="fas fa-eye" id="eye-icon-1"></i>
                         </button>
                     </div>
                 </div>
+                
+                <!-- Confirm Password Field -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-zinc-300 ml-1">
+                        <i class="fas fa-lock mr-2 text-zinc-500"></i>Confirm Password
+                    </label>
+                    <div class="relative">
+                        <input type="password" 
+                               name="password_confirm" 
+                               required
+                               id="password-confirm-input"
+                               class="w-full px-4 py-3.5 bg-white/4 border border-white/8 rounded-xl focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 text-white placeholder-zinc-500 transition-all outline-none input-glow hover:bg-white/6 pr-12"
+                               placeholder="Confirm your password">
+                        <button type="button"
+                                onclick="togglePassword('password-confirm-input', 'eye-icon-2')"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors p-2">
+                            <i class="fas fa-eye" id="eye-icon-2"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                {% if require_invite_code %}
+                <!-- Invite Code Field -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-zinc-300 ml-1">
+                        <i class="fas fa-key mr-2 text-zinc-500"></i>Invite Code
+                    </label>
+                    <input type="text" 
+                           name="invite_code" 
+                           required
+                           class="w-full px-4 py-3.5 bg-white/4 border border-white/8 rounded-xl focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 text-white placeholder-zinc-500 transition-all outline-none input-glow hover:bg-white/6"
+                           placeholder="Enter your invite code">
+                </div>
+                {% endif %}
 
-                <!-- Sign In Button -->
+                <!-- Sign Up Button -->
                 <button type="submit" 
                         class="w-full py-3.5 btn-primary bg-gradient-to-r from-indigo-500 via-blue-500 to-violet-600 hover:from-indigo-600 hover:via-blue-600 hover:to-violet-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 transform hover:translate-y-[-1px] active:translate-y-0 flex items-center justify-center gap-3 mt-6">
-                    <i class="fas fa-arrow-right-to-bracket"></i>
-                    <span>Sign In</span>
+                    <i class="fas fa-user-plus"></i>
+                    <span>Create Account</span>
                 </button>
+                {% endif %}
             </form>
 
+            {% if not signup_disabled %}
             <!-- Divider -->
             <div class="relative my-6">
                 <div class="absolute inset-0 flex items-center">
                     <div class="w-full border-t border-white/8"></div>
                 </div>
                 <div class="relative flex justify-center text-xs">
-                    <span class="px-3 bg-[#12121a] text-zinc-500 uppercase tracking-wider font-medium">New to Nexus?</span>
+                    <span class="px-3 bg-[#12121a] text-zinc-500 uppercase tracking-wider font-medium">Already have an account?</span>
                 </div>
             </div>
             
-            <!-- Sign Up Link -->
-            <a href="{% url 'signup' %}" class="w-full py-3 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/15 rounded-xl text-zinc-300 hover:text-white transition-all duration-200 text-sm font-medium">
-                <i class="fas fa-user-plus"></i>
-                <span>Create Account</span>
+            <!-- Sign In Link -->
+            <a href="/accounts/login/" class="w-full py-3 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/15 rounded-xl text-zinc-300 hover:text-white transition-all duration-200 text-sm font-medium">
+                <i class="fas fa-arrow-right-to-bracket"></i>
+                <span>Sign In Instead</span>
             </a>
+            {% endif %}
         </div>
         
         <!-- Footer Links -->
@@ -225,9 +291,9 @@
     
     <script>
         // Toggle password visibility
-        function togglePassword() {
-            const input = document.getElementById('password-input');
-            const icon = document.getElementById('eye-icon');
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
             
             if (input.type === 'password') {
                 input.type = 'text';

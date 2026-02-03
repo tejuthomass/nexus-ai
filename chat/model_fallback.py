@@ -32,6 +32,7 @@ import os
 import logging
 import time
 from google import genai
+from django.core.cache import cache
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -54,9 +55,8 @@ MODEL_HIERARCHY = [
     "gemma-3-1b",
 ]
 
-# Track global rate limit exhaustion (shared across all users)
-_all_models_exhausted = False
-_exhaustion_timestamp = None
+# Cache keys for rate limit exhaustion (shared across all workers)
+CACHE_KEY_EXHAUSTED = "model_fallback_exhausted"
 EXHAUSTION_RESET_TIME = 300  # Reset after 5 minutes
 
 # Retry settings for transient errors
@@ -75,23 +75,27 @@ class ModelExhaustionError(Exception):
     pass
 
 
-def reset_exhaustion_if_needed():
-    """Reset the model exhaustion flag if enough time has passed.
+def is_models_exhausted():
+    """Check if all models are currently exhausted.
 
-    Checks if EXHAUSTION_RESET_TIME seconds have elapsed since all
-    models were marked as exhausted. If so, resets the global flags
-    to allow new requests to try the model hierarchy again.
+    Uses Django cache to check exhaustion state shared across workers.
 
-    This enables automatic recovery after rate limit windows expire.
+    Returns:
+        bool: True if all models are exhausted, False otherwise.
     """
-    global _all_models_exhausted, _exhaustion_timestamp
+    return cache.get(CACHE_KEY_EXHAUSTED, False)
 
-    if _all_models_exhausted and _exhaustion_timestamp:
-        elapsed = time.time() - _exhaustion_timestamp
-        if elapsed > EXHAUSTION_RESET_TIME:
-            logger.info("Resetting model exhaustion after %.0fs", elapsed)
-            _all_models_exhausted = False
-            _exhaustion_timestamp = None
+
+def set_models_exhausted():
+    """Mark all models as exhausted in the cache.
+
+    Sets a cache key that expires after EXHAUSTION_RESET_TIME seconds,
+    providing automatic recovery without manual intervention.
+    """
+    cache.set(CACHE_KEY_EXHAUSTED, True, timeout=EXHAUSTION_RESET_TIME)
+    logger.warning(
+        "All models exhausted, cache flag set for %ds", EXHAUSTION_RESET_TIME
+    )
 
 
 def is_rate_limit_error(error_str):
@@ -181,13 +185,8 @@ def generate_with_fallback(prompt, system_instruction=""):
         Exception: For non-recoverable errors such as API key issues
             or authentication failures.
     """
-    global _all_models_exhausted, _exhaustion_timestamp
-
-    # Check if we should reset exhaustion
-    reset_exhaustion_if_needed()
-
-    # If all models were exhausted recently, fail fast
-    if _all_models_exhausted:
+    # If all models were exhausted recently, fail fast (cache auto-expires)
+    if is_models_exhausted():
         logger.warning("All models exhausted, rejecting request")
         raise ModelExhaustionError(
             "All model rate limits reached. Please try again later."
@@ -199,13 +198,12 @@ def generate_with_fallback(prompt, system_instruction=""):
         client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
     except Exception as e:
         logger.error("Failed to initialize Gemini client: %s", e)
-        raise Exception("API configuration error. Please contact administrator.")
+        raise Exception("API configuration error. Please contact administrator.") from e
 
     # Build the full prompt with system instruction
     full_prompt = f"{system_instruction}\n\n{prompt}" if system_instruction else prompt
 
     # Try each model in the hierarchy
-    last_error = None
     for model_index, model_name in enumerate(MODEL_HIERARCHY):
         logger.info(
             "Attempting model %s/%s: %s",
@@ -278,8 +276,7 @@ def generate_with_fallback(prompt, system_instruction=""):
 
     # If we get here, all models failed with rate limits
     logger.error("All %s models exhausted", len(MODEL_HIERARCHY))
-    _all_models_exhausted = True
-    _exhaustion_timestamp = time.time()
+    set_models_exhausted()
 
     raise ModelExhaustionError(
         "Service temporarily unavailable. All model rate limits reached. Please try again later."
@@ -319,25 +316,19 @@ def get_model_display_name(model_name):
 def check_service_availability():
     """Check if the AI service is currently available.
 
-    Checks the global model exhaustion status to determine if AI
-    responses can be generated. Automatically resets exhaustion
-    status if enough time has passed.
+    Checks the cache-based model exhaustion status to determine if AI
+    responses can be generated. The cache auto-expires after
+    EXHAUSTION_RESET_TIME seconds.
 
     Returns:
         tuple: A tuple of (is_available, message) where:
             - is_available (bool): True if service can accept requests.
             - message (str): Status message describing availability.
     """
-    reset_exhaustion_if_needed()
-
-    if _all_models_exhausted:
-        time_since_exhaustion = (
-            time.time() - _exhaustion_timestamp if _exhaustion_timestamp else 0
-        )
-        time_remaining = max(0, EXHAUSTION_RESET_TIME - time_since_exhaustion)
+    if is_models_exhausted():
         return (
             False,
-            f"Service temporarily unavailable. Please try again in {int(time_remaining)}s.",
+            "Service temporarily unavailable. Please try again in a few minutes.",
         )
 
     return True, "Service available"

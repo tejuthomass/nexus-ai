@@ -12,18 +12,29 @@ Attributes:
     handler500 (str): Path to the custom 500 error handler.
 """
 
+import os
 from django.contrib import admin
+from django.contrib.auth import views as auth_views
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from config.views import index
-import os
+from config.views import index, signup
 
 # Admin URL from environment variable (default: admin/)
 ADMIN_URL_PATH = os.getenv("ADMIN_URL_PATH", "admin/")
 
 urlpatterns = [
     path("", index, name="index"),  # Landing page
+    path("accounts/signup/", signup, name="signup"),  # User signup
+    # Override login to redirect authenticated users
+    path(
+        "accounts/login/",
+        auth_views.LoginView.as_view(
+            template_name="registration/login.html",
+            redirect_authenticated_user=True,
+        ),
+        name="login",
+    ),
     path(ADMIN_URL_PATH, admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
     path("chat/", include("chat.urls")),  # Changed from '' to 'chat/'

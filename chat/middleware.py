@@ -265,7 +265,7 @@ class RateLimitMiddleware:
             JsonResponse: A 429 status response with error details.
         """
         # Check if this is an HTMX request
-        is_htmx = (
+        _ = (
             "HX-Request" in self.get_response.__self__.META
             if hasattr(self.get_response, "__self__")
             else False
