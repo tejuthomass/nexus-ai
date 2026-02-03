@@ -31,8 +31,8 @@ def index(request):
         cursor.execute("SELECT version();")
         db_version = cursor.fetchone()[0]
 
-    context = {'db_version': db_version}
-    return render(request, 'index.html', context)
+    context = {"db_version": db_version}
+    return render(request, "index.html", context)
 
 
 def handler404(request, exception=None):
@@ -49,7 +49,7 @@ def handler404(request, exception=None):
     Returns:
         HttpResponse: The rendered 404.html template with HTTP 404 status.
     """
-    return render(request, '404.html', status=404)
+    return render(request, "404.html", status=404)
 
 
 def handler500(request):
@@ -64,4 +64,4 @@ def handler500(request):
     Returns:
         HttpResponse: The rendered 500.html template with HTTP 500 status.
     """
-    return render(request, '500.html', status=500)
+    return render(request, "500.html", status=500)

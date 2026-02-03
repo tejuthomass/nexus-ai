@@ -19,8 +19,8 @@ class ChatConfig(AppConfig):
         name (str): The name of the application.
     """
 
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'chat'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "chat"
 
     def ready(self):
         """Initialize the chat application.
@@ -29,4 +29,5 @@ class ChatConfig(AppConfig):
         imports the signals module to register signal handlers for
         cleanup operations (Cloudinary, Pinecone vector deletion).
         """
+        # pylint: disable=import-outside-toplevel, unused-import
         import chat.signals  # <--- Add this line

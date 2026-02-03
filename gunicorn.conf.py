@@ -37,17 +37,17 @@ backlog = 2048
 # Worker processes
 # Formula: (2 x num_cores) + 1
 # For production: Use environment variable or auto-detect
-workers = int(os.getenv('WEB_CONCURRENCY', multiprocessing.cpu_count() * 2 + 1))
+workers = int(os.getenv("WEB_CONCURRENCY", multiprocessing.cpu_count() * 2 + 1))
 
 # Worker class
 # Use 'sync' workers for better compatibility with long-running AI API calls
 # Each worker handles one request at a time but we have multiple workers
-worker_class = 'sync'
+worker_class = "sync"
 
 # Threading
 # Each worker can handle multiple threads for I/O-bound tasks (API calls)
 # This allows efficient handling of waiting time during AI API calls
-threads = int(os.getenv('THREADS_PER_WORKER', 4))
+threads = int(os.getenv("THREADS_PER_WORKER", 4))
 
 # Worker connections
 worker_connections = 1000
@@ -62,13 +62,13 @@ keepalive = 5
 graceful_timeout = 30
 
 # Logging
-accesslog = '-'  # Log to stdout
-errorlog = '-'   # Log to stderr
-loglevel = os.getenv('LOG_LEVEL', 'info')
+accesslog = "-"  # Log to stdout
+errorlog = "-"  # Log to stderr
+loglevel = os.getenv("LOG_LEVEL", "info")
 access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s" %(D)s'
 
 # Process naming
-proc_name = 'nexus-ai'
+proc_name = "nexus-ai"
 
 # Server mechanics
 daemon = False
@@ -90,6 +90,7 @@ preload_app = True
 max_requests = 1000
 max_requests_jitter = 50
 
+
 # Worker lifecycle hooks
 def on_starting(server):
     """Handle server startup initialization.
@@ -100,9 +101,13 @@ def on_starting(server):
     Args:
         server: The Arbiter instance managing the workers.
     """
-    print(f"🚀 Starting Nexus server with {workers} workers and {threads} threads per worker")
+    print(
+        f"🚀 Starting Nexus server with {workers} workers and {threads} threads per worker"
+    )
     print(f"📊 Expected capacity: 10-20 users, 5-10 concurrent users")
-    print(f"🔧 Configuration: {workers} workers x {threads} threads = {workers * threads} concurrent connections")
+    print(
+        f"🔧 Configuration: {workers} workers x {threads} threads = {workers * threads} concurrent connections"
+    )
 
 
 def on_reload(server):
@@ -151,6 +156,7 @@ def worker_abort(worker):
         worker: The Worker instance that received the signal.
     """
     print(f"❌ Worker {worker.pid} aborted")
+
 
 # Capacity explanation:
 # With 4 workers and 4 threads per worker:

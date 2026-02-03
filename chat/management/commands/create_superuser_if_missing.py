@@ -31,7 +31,7 @@ class Command(BaseCommand):
         help (str): Description shown in `manage.py help` output.
     """
 
-    help = 'Create a superuser from environment variables if one does not exist'
+    help = "Create a superuser from environment variables if one does not exist"
 
     def handle(self, *args, **options):
         """Execute the command to create a superuser if needed.
@@ -47,32 +47,28 @@ class Command(BaseCommand):
             None: Outputs status messages to stdout.
         """
         User = get_user_model()
-        
-        username = os.getenv('DJANGO_SUPERUSER_USERNAME')
-        email = os.getenv('DJANGO_SUPERUSER_EMAIL', '')
-        password = os.getenv('DJANGO_SUPERUSER_PASSWORD')
-        
+
+        username = os.getenv("DJANGO_SUPERUSER_USERNAME")
+        email = os.getenv("DJANGO_SUPERUSER_EMAIL", "")
+        password = os.getenv("DJANGO_SUPERUSER_PASSWORD")
+
         if not username or not password:
             self.stdout.write(
                 self.style.WARNING(
-                    'Skipping superuser creation: DJANGO_SUPERUSER_USERNAME and '
-                    'DJANGO_SUPERUSER_PASSWORD environment variables not set.'
+                    "Skipping superuser creation: DJANGO_SUPERUSER_USERNAME and "
+                    "DJANGO_SUPERUSER_PASSWORD environment variables not set."
                 )
             )
             return
-        
+
         if User.objects.filter(username=username).exists():
             self.stdout.write(
                 self.style.SUCCESS(f'Superuser "{username}" already exists. Skipping.')
             )
             return
-        
-        User.objects.create_superuser(
-            username=username,
-            email=email,
-            password=password
-        )
-        
+
+        User.objects.create_superuser(username=username, email=email, password=password)
+
         self.stdout.write(
             self.style.SUCCESS(f'Superuser "{username}" created successfully!')
         )

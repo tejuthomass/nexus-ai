@@ -1,0 +1,17 @@
+[MASTER]
+# Load the plugin to understand Django models
+load-plugins=pylint_django
+# Tell the plugin where your settings are
+django-settings-module=config.settings
+
+# Ignore these folders
+ignore=migrations,venv,.venv,env,.git,__pycache__,staticfiles,tests
+
+[MESSAGES CONTROL]
+# C0111: Missing docstrings (optional to ignore)
+# E5110: Abstract class warnings (often false positives in Django)
+disable=C0114,C0115,C0116,E5110
+
+[FORMAT]
+# Set line length to 100 (standard for modern Django projects)
+max-line-length=100

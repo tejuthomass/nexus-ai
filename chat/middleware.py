@@ -19,11 +19,9 @@ Constants:
     GLOBAL_PARALLEL_LIMIT: Maximum concurrent requests globally.
 """
 
-import time
 import logging
 from django.http import JsonResponse
 from django.core.cache import cache
-from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -85,49 +83,49 @@ class RateLimitMiddleware:
         # Skip static files, admin panel, and authentication pages
         if not self._should_rate_limit(request):
             return self.get_response(request)
-        
+
         # Check if user is authenticated
         if not request.user.is_authenticated:
             return self.get_response(request)
-        
+
         user_id = request.user.id
-        
+
         # Check rate limits in order of severity
         # 1. Check global parallel limit first (most critical)
         if not self._check_global_limit():
-            logger.warning(f"Global parallel limit exceeded")
+            logger.warning("Global parallel limit exceeded")
             return self._rate_limit_response(
                 "System is currently at capacity. Please try again in a moment.",
-                retry_after=5
+                retry_after=5,
             )
-        
+
         # 2. Check per-user minute limit
         if not self._check_user_minute_limit(user_id):
-            logger.warning(f"User {user_id} exceeded minute rate limit")
+            logger.warning("User %s exceeded minute rate limit", user_id)
             return self._rate_limit_response(
                 "Too many requests. Please wait a moment before sending another message.",
-                retry_after=10
+                retry_after=10,
             )
-        
+
         # 3. Check per-user hour limit
         if not self._check_user_hour_limit(user_id):
-            logger.warning(f"User {user_id} exceeded hourly rate limit")
+            logger.warning("User %s exceeded hourly rate limit", user_id)
             return self._rate_limit_response(
                 "Hourly limit reached. Please try again later.",
-                retry_after=300  # 5 minutes
+                retry_after=300,  # 5 minutes
             )
-        
+
         # Increment global counter before processing
         self._increment_global_counter()
-        
+
         try:
             response = self.get_response(request)
         finally:
             # Decrement global counter after processing
             self._decrement_global_counter()
-        
+
         return response
-    
+
     def _should_rate_limit(self, request):
         """Determine if this request should be rate limited.
 
@@ -141,30 +139,31 @@ class RateLimitMiddleware:
             bool: True if the request should be rate limited, False otherwise.
         """
         import os
+
         path = request.path
         admin_path = f"/{os.getenv('ADMIN_URL_PATH', 'admin/')}"
-        
+
         # Don't rate limit these paths
         exempt_paths = [
-            '/static/',
-            '/media/',
+            "/static/",
+            "/media/",
             admin_path,
-            '/accounts/login/',
-            '/accounts/logout/',
-            '/favicon.ico',
+            "/accounts/login/",
+            "/accounts/logout/",
+            "/favicon.ico",
         ]
-        
+
         for exempt_path in exempt_paths:
             if path.startswith(exempt_path):
                 return False
-        
+
         # Only rate limit POST requests (actual actions)
         # Allow GET requests for loading pages/chat history
-        if request.method != 'POST':
+        if request.method != "POST":
             return False
-        
+
         return True
-    
+
     def _check_global_limit(self):
         """Check if global parallel request limit is exceeded.
 
@@ -177,9 +176,9 @@ class RateLimitMiddleware:
             return active_requests < GLOBAL_PARALLEL_LIMIT
         except Exception as e:
             # If cache is unavailable (e.g., table doesn't exist), allow request
-            logger.warning(f"Cache unavailable in _check_global_limit: {e}")
+            logger.warning("Cache unavailable in _check_global_limit: %s", e)
             return True
-    
+
     def _increment_global_counter(self):
         """Increment the global active request counter.
 
@@ -191,8 +190,8 @@ class RateLimitMiddleware:
             current = cache.get(cache_key, 0)
             cache.set(cache_key, current + 1, timeout=60)
         except Exception as e:
-            logger.error(f"Failed to increment global counter: {e}")
-    
+            logger.error("Failed to increment global counter: %s", e)
+
     def _decrement_global_counter(self):
         """Decrement the global active request counter.
 
@@ -205,8 +204,8 @@ class RateLimitMiddleware:
             if current > 0:
                 cache.set(cache_key, current - 1, timeout=60)
         except Exception as e:
-            logger.error(f"Failed to decrement global counter: {e}")
-    
+            logger.error("Failed to decrement global counter: %s", e)
+
     def _check_user_minute_limit(self, user_id):
         """Check and update per-user minute rate limit.
 
@@ -218,7 +217,7 @@ class RateLimitMiddleware:
                 Returns True on cache errors to fail open.
         """
         cache_key = f"{CACHE_PREFIX_MINUTE}{user_id}"
-        
+
         try:
             current_count = cache.get(cache_key, 0)
             if current_count >= USER_REQUESTS_PER_MINUTE:
@@ -226,9 +225,9 @@ class RateLimitMiddleware:
             cache.set(cache_key, current_count + 1, timeout=60)
             return True
         except Exception as e:
-            logger.error(f"Cache error in minute limit: {e}")
+            logger.error("Cache error in minute limit: %s", e)
             return True  # Fail open to not block users
-    
+
     def _check_user_hour_limit(self, user_id):
         """Check and update per-user hourly rate limit.
 
@@ -240,7 +239,7 @@ class RateLimitMiddleware:
                 Returns True on cache errors to fail open.
         """
         cache_key = f"{CACHE_PREFIX_HOUR}{user_id}"
-        
+
         try:
             current_count = cache.get(cache_key, 0)
             if current_count >= USER_REQUESTS_PER_HOUR:
@@ -248,9 +247,9 @@ class RateLimitMiddleware:
             cache.set(cache_key, current_count + 1, timeout=3600)
             return True
         except Exception as e:
-            logger.error(f"Cache error in hour limit: {e}")
+            logger.error("Cache error in hour limit: %s", e)
             return True  # Fail open to not block users
-    
+
     def _rate_limit_response(self, message, retry_after=60):
         """Generate a rate limit response.
 
@@ -266,17 +265,24 @@ class RateLimitMiddleware:
             JsonResponse: A 429 status response with error details.
         """
         # Check if this is an HTMX request
-        is_htmx = 'HX-Request' in self.get_response.__self__.META if hasattr(self.get_response, '__self__') else False
-        
+        is_htmx = (
+            "HX-Request" in self.get_response.__self__.META
+            if hasattr(self.get_response, "__self__")
+            else False
+        )
+
         # For HTMX requests, return HTML partial
         # For API requests, return JSON
-        response = JsonResponse({
-            'error': 'rate_limit_exceeded',
-            'message': message,
-            'retry_after': retry_after
-        }, status=429)
-        
-        response['Retry-After'] = str(retry_after)
+        response = JsonResponse(
+            {
+                "error": "rate_limit_exceeded",
+                "message": message,
+                "retry_after": retry_after,
+            },
+            status=429,
+        )
+
+        response["Retry-After"] = str(retry_after)
         return response
 
 
@@ -313,17 +319,24 @@ class APIRateLimitMiddleware:
                 response if the AI API limit is exceeded.
         """
         # Only apply to chat message endpoints
-        if request.method == 'POST' and '/chat/' in request.path and request.POST.get('message'):
+        if (
+            request.method == "POST"
+            and "/chat/" in request.path
+            and request.POST.get("message")
+        ):
             if not self._check_api_rate_limit(request.user.id):
-                logger.warning(f"User {request.user.id} exceeded API rate limit")
-                return JsonResponse({
-                    'error': 'api_rate_limit',
-                    'message': 'AI API rate limit reached. Please wait before sending another message.',
-                    'retry_after': 30
-                }, status=429)
-        
+                logger.warning("User %s exceeded API rate limit", request.user.id)
+                return JsonResponse(
+                    {
+                        "error": "api_rate_limit",
+                        "message": "AI API rate limit reached. Please wait before sending another message.",
+                        "retry_after": 30,
+                    },
+                    status=429,
+                )
+
         return self.get_response(request)
-    
+
     def _check_api_rate_limit(self, user_id):
         """Check API-specific rate limit for a user.
 
@@ -338,7 +351,7 @@ class APIRateLimitMiddleware:
                 Returns True on cache errors to fail open.
         """
         cache_key = f"api_rate_limit_{user_id}"
-        
+
         try:
             current_count = cache.get(cache_key, 0)
             if current_count >= 5:  # 5 AI calls per minute
@@ -346,5 +359,5 @@ class APIRateLimitMiddleware:
             cache.set(cache_key, current_count + 1, timeout=60)
             return True
         except Exception as e:
-            logger.error(f"Cache error in API limit: {e}")
+            logger.error("Cache error in API limit: %s", e)
             return True  # Fail open to not block users

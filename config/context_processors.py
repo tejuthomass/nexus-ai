@@ -27,7 +27,7 @@ def admin_url(request):
         >>> admin_url(request)
         {'admin_url': '/admin/'}
     """
-    admin_path = os.getenv('ADMIN_URL_PATH', 'admin/')
+    admin_path = os.getenv("ADMIN_URL_PATH", "admin/")
     return {
-        'admin_url': f'/{admin_path}' if not admin_path.startswith('/') else admin_path,
+        "admin_url": f"/{admin_path}" if not admin_path.startswith("/") else admin_path,
     }

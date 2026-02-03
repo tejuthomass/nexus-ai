@@ -51,7 +51,7 @@ MODEL_HIERARCHY = [
     "gemma-3-12b",
     "gemma-3-4b",
     "gemma-3-2b",
-    "gemma-3-1b"
+    "gemma-3-1b",
 ]
 
 # Track global rate limit exhaustion (shared across all users)
@@ -71,6 +71,7 @@ class ModelExhaustionError(Exception):
     failed due to rate limits or other recoverable errors, indicating
     the service is temporarily unavailable.
     """
+
     pass
 
 
@@ -84,11 +85,11 @@ def reset_exhaustion_if_needed():
     This enables automatic recovery after rate limit windows expire.
     """
     global _all_models_exhausted, _exhaustion_timestamp
-    
+
     if _all_models_exhausted and _exhaustion_timestamp:
         elapsed = time.time() - _exhaustion_timestamp
         if elapsed > EXHAUSTION_RESET_TIME:
-            logger.info(f"Resetting model exhaustion after {elapsed:.0f}s")
+            logger.info("Resetting model exhaustion after %.0fs", elapsed)
             _all_models_exhausted = False
             _exhaustion_timestamp = None
 
@@ -107,15 +108,18 @@ def is_rate_limit_error(error_str):
             unavailability, False otherwise.
     """
     error_lower = error_str.lower()
-    return any(keyword in error_lower for keyword in [
-        '429',
-        '503',
-        'rate limit',
-        'quota',
-        'overloaded',
-        'temporarily unavailable',
-        'too many requests'
-    ])
+    return any(
+        keyword in error_lower
+        for keyword in [
+            "429",
+            "503",
+            "rate limit",
+            "quota",
+            "overloaded",
+            "temporarily unavailable",
+            "too many requests",
+        ]
+    )
 
 
 def is_fallback_error(error_str):
@@ -133,20 +137,23 @@ def is_fallback_error(error_str):
             model, False for non-recoverable errors.
     """
     error_lower = error_str.lower()
-    return any(keyword in error_lower for keyword in [
-        '404',
-        'not found',
-        'not_found',
-        'not supported',
-        'not available',
-        '429',
-        '503',
-        'rate limit',
-        'quota',
-        'overloaded',
-        'temporarily unavailable',
-        'too many requests'
-    ])
+    return any(
+        keyword in error_lower
+        for keyword in [
+            "404",
+            "not found",
+            "not_found",
+            "not supported",
+            "not available",
+            "429",
+            "503",
+            "rate limit",
+            "quota",
+            "overloaded",
+            "temporarily unavailable",
+            "too many requests",
+        ]
+    )
 
 
 def generate_with_fallback(prompt, system_instruction=""):
@@ -175,84 +182,105 @@ def generate_with_fallback(prompt, system_instruction=""):
             or authentication failures.
     """
     global _all_models_exhausted, _exhaustion_timestamp
-    
+
     # Check if we should reset exhaustion
     reset_exhaustion_if_needed()
-    
+
     # If all models were exhausted recently, fail fast
     if _all_models_exhausted:
         logger.warning("All models exhausted, rejecting request")
-        raise ModelExhaustionError("All model rate limits reached. Please try again later.")
-    
+        raise ModelExhaustionError(
+            "All model rate limits reached. Please try again later."
+        )
+
     # Initialize client
     try:
         # Create client with API key - works for Gemini Developer API
         client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
     except Exception as e:
-        logger.error(f"Failed to initialize Gemini client: {e}")
+        logger.error("Failed to initialize Gemini client: %s", e)
         raise Exception("API configuration error. Please contact administrator.")
-    
+
     # Build the full prompt with system instruction
     full_prompt = f"{system_instruction}\n\n{prompt}" if system_instruction else prompt
-    
+
     # Try each model in the hierarchy
     last_error = None
     for model_index, model_name in enumerate(MODEL_HIERARCHY):
-        logger.info(f"Attempting model {model_index + 1}/{len(MODEL_HIERARCHY)}: {model_name}")
-        
+        logger.info(
+            "Attempting model %s/%s: %s",
+            model_index + 1,
+            len(MODEL_HIERARCHY),
+            model_name,
+        )
+
         # Try this model with retries for transient errors
         for attempt in range(MAX_RETRIES_PER_MODEL):
             try:
                 response = client.models.generate_content(
-                    model=model_name,
-                    contents=full_prompt
+                    model=model_name, contents=full_prompt
                 )
-                
+
                 # Success! Return the response and model used
-                logger.info(f"Success with {model_name} on attempt {attempt + 1}")
+                logger.info("Success with %s on attempt %s", model_name, attempt + 1)
                 return response.text, model_name
-                
+
             except Exception as e:
                 error_str = str(e)
                 last_error = e
-                
+
                 # Check if this error should trigger fallback
                 if is_fallback_error(error_str):
                     # This is a recoverable error (rate limit, not found, etc.)
-                    if '404' in error_str or 'not found' in error_str.lower():
+                    if "404" in error_str or "not found" in error_str.lower():
                         logger.warning(
-                            f"Model {model_name} not available (404): {error_str[:100]}... Moving to next model"
+                            "Model %s not available (404): %s... Moving to next model",
+                            model_name,
+                            error_str[:100],
                         )
                         # Don't retry 404s, move to next model immediately
                         break
                     elif is_rate_limit_error(error_str):
                         logger.warning(
-                            f"Rate limit hit for {model_name} (attempt {attempt + 1}/{MAX_RETRIES_PER_MODEL}): {error_str[:100]}..."
+                            "Rate limit hit for %s (attempt %s/%s): %s...",
+                            model_name,
+                            attempt + 1,
+                            MAX_RETRIES_PER_MODEL,
+                            error_str[:100],
                         )
                         # If this is not the last retry for this model, wait and retry
                         if attempt < MAX_RETRIES_PER_MODEL - 1:
-                            delay = INITIAL_RETRY_DELAY * (2 ** attempt)
-                            logger.info(f"Retrying {model_name} in {delay}s...")
+                            delay = INITIAL_RETRY_DELAY * (2**attempt)
+                            logger.info("Retrying %s in %ss...", model_name, delay)
                             time.sleep(delay)
                             continue
                         else:
                             # Max retries for this model reached, move to next model
-                            logger.warning(f"Max retries reached for {model_name}, moving to next model")
+                            logger.warning(
+                                "Max retries reached for %s, moving to next model",
+                                model_name,
+                            )
                             break
                     else:
                         # Other fallback error, move to next model
-                        logger.warning(f"Error with {model_name}: {error_str[:100]}... Moving to next model")
+                        logger.warning(
+                            "Error with %s: %s... Moving to next model",
+                            model_name,
+                            error_str[:100],
+                        )
                         break
                 else:
                     # Non-recoverable error (API key issues, etc.)
-                    logger.error(f"Non-recoverable error with {model_name}: {error_str}")
+                    logger.error(
+                        "Non-recoverable error with %s: %s", model_name, error_str
+                    )
                     raise
-    
+
     # If we get here, all models failed with rate limits
-    logger.error(f"All {len(MODEL_HIERARCHY)} models exhausted")
+    logger.error("All %s models exhausted", len(MODEL_HIERARCHY))
     _all_models_exhausted = True
     _exhaustion_timestamp = time.time()
-    
+
     raise ModelExhaustionError(
         "Service temporarily unavailable. All model rate limits reached. Please try again later."
     )
@@ -283,7 +311,7 @@ def get_model_display_name(model_name):
         "gemma-3-12b": "Gemma 3 12B",
         "gemma-3-4b": "Gemma 3 4B",
         "gemma-3-2b": "Gemma 3 2B",
-        "gemma-3-1b": "Gemma 3 1B"
+        "gemma-3-1b": "Gemma 3 1B",
     }
     return name_map.get(model_name, model_name)
 
@@ -301,10 +329,15 @@ def check_service_availability():
             - message (str): Status message describing availability.
     """
     reset_exhaustion_if_needed()
-    
+
     if _all_models_exhausted:
-        time_since_exhaustion = time.time() - _exhaustion_timestamp if _exhaustion_timestamp else 0
+        time_since_exhaustion = (
+            time.time() - _exhaustion_timestamp if _exhaustion_timestamp else 0
+        )
         time_remaining = max(0, EXHAUSTION_RESET_TIME - time_since_exhaustion)
-        return False, f"Service temporarily unavailable. Please try again in {int(time_remaining)}s."
-    
+        return (
+            False,
+            f"Service temporarily unavailable. Please try again in {int(time_remaining)}s.",
+        )
+
     return True, "Service available"
