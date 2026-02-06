@@ -554,13 +554,20 @@ def admin_dashboard(request):
 
     # 2. Get stats for each user
     user_data = []
+    total_sessions = 0
     for u in users:
         sessions = ChatSession.objects.filter(user=u).order_by("-created_at")
+        count = sessions.count()
+        total_sessions += count
         user_data.append(
-            {"user": u, "session_count": sessions.count(), "sessions": sessions}
+            {"user": u, "session_count": count, "sessions": sessions}
         )
 
-    return render(request, "chat/dashboard.html", {"user_data": user_data})
+    return render(
+        request,
+        "chat/dashboard.html",
+        {"user_data": user_data, "total_sessions": total_sessions},
+    )
 
 
 @staff_member_required
